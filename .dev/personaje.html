@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Vista del personaje</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Titan+One&display=swap">
+<style>
+body{margin:0;font-family:Nunito,system-ui;background:#fff7fb;color:#3a1230;padding:16px}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.card{background:#fff;border-radius:20px;padding:12px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.card small{display:block;text-align:center;font-weight:700;margin-top:4px}
+.dark{background:#2a1233}
+</style></head><body>
+<div class="row" id="row"></div>
+<script src="../js/core.js"></script>
+<script src="../js/character.js"></script>
+<script src="../js/brand.js"></script>
+<script>
+const q = new URLSearchParams(location.search);
+const views = (q.get('v') || 'full').split(',');
+const moods = (q.get('m') || 'happy').split(',');
+const size = +(q.get('s') || 420);
+const row = document.getElementById('row');
+for (const v of views) for (const m of moods) {
+  const d = document.createElement('div'); d.className = 'card' + (q.get('dark') ? ' dark' : '');
+  d.style.width = size + 'px';
+  d.innerHTML = D.art.character({ view: v, mood: m, sparkles: q.get('sp') === '1' }) + `<small>${v} · ${m}</small>`;
+  row.appendChild(d);
+}
+</script></body></html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Vista del logo</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=Titan+One&display=swap">
+<style>
+body{margin:0;font-family:Nunito,system-ui;background:#fff7fb;color:#3a1230;padding:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(560px,1fr));gap:16px}
+.card{border-radius:24px;padding:20px;display:grid;place-items:center;min-height:200px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.w{background:#fff}.p{background:#ff3d8b}.d{background:#2a1233}.c{background:#fff1df}
+h2{font-size:14px;margin:18px 0 6px}
+</style></head><body>
+<div class="grid" id="g"></div>
+<script src="../js/core.js"></script>
+<script src="../js/character.js"></script>
+<script src="../js/brand.js"></script>
+<script src="exportar-logos.js"></script>
+<script>
+const g = document.getElementById('g');
+const add = (cls, html, w) => { const d = document.createElement('div'); d.className = 'card ' + cls; d.innerHTML = html; const s = d.firstElementChild; s.style.width = (w||280)+'px'; g.appendChild(d); };
+const q = new URLSearchParams(location.search).get('set') || 'a';
+if (q === 'a') {
+  add('w', D.art.wordmark({}), 300);
+  add('w', D.art.wordmark({flavor:'mora'}), 300);
+  add('w', D.art.wordmark({mono:'#3a1230'}), 300);
+  add('p', D.art.wordmark({reverse:true, edge:'#c4165f'}), 300);
+  add('w', D.art.isotipo({}), 220);
+  add('w', D.art.isotipo({shape:'circle'}), 220);
+}
+if (q === 'b') {
+  add('w', D.art.logoVertical({}), 520);
+  add('c', D.art.logoHorizontal({}), 520); add('p', D.art.logoHorizontal({reverse:true, edge:'#c4165f', ink:'#fff'}), 520); add('d', D.art.logoVertical({reverse:true, edge:'#8f4dff', ink:'#fff'}), 400);
+}
+</script></body></html>

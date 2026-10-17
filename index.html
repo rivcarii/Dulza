@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Dulza · Ventas y compras</title>
+<meta name="description" content="Dulza: gestiona ventas, compras, cobros y facturas de tu emprendimiento de postres. Funciona en el celular, la tableta y la computadora, incluso sin internet.">
+<meta name="theme-color" content="#fff7f5">
+<meta name="color-scheme" content="light dark">
+<meta name="application-name" content="Dulza">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dulza">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="assets/favicon-64.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script>
+/* Aplica el tema guardado antes del primer pintado (evita el destello claro/oscuro) */
+(function(){try{var t=JSON.parse(localStorage.getItem('dz-theme')||'null'),r=document.documentElement;
+if(t){var s=t.mode==='auto'||!t.mode?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):t.mode;r.dataset.theme=s;
+for(var k in t.vars)r.style.setProperty(k,t.vars[k]);var m=document.querySelector('meta[name=theme-color]');if(m&&t.bg)m.setAttribute('content',t.bg);}
+else if(matchMedia('(prefers-color-scheme: dark)').matches){r.dataset.theme='dark';}}catch(e){}})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Titan+One&display=swap">
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"></div>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<div class="app" id="app">
+  <aside class="sidebar glass" id="sidebar" aria-label="Navegación"></aside>
+  <main class="main" id="main" tabindex="-1"><div class="view" id="view"></div></main>
+  <nav class="tabbar glass" id="tabbar" aria-label="Principal"></nav>
+</div>
+
+<div id="toasts" popover="manual" role="status" aria-live="polite"></div>
+
+<noscript><p style="padding:2rem;font-family:system-ui">Dulza necesita JavaScript para funcionar. Actívalo en tu navegador e intenta de nuevo.</p></noscript>
+
+<script src="js/core.js"></script>
+<script src="js/store.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/art.js"></script>
+<script src="js/character.js"></script>
+<script src="js/brand.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/invoice.js"></script>
+<script src="js/forms.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/views/inicio.js"></script>
+<script src="js/views/ventas.js"></script>
+<script src="js/views/cobros.js"></script>
+<script src="js/views/compras.js"></script>
+<script src="js/views/clientes.js"></script>
+<script src="js/views/productos.js"></script>
+<script src="js/views/proveedores.js"></script>
+<script src="js/views/reportes.js"></script>
+<script src="js/views/ajustes.js"></script>
+<script src="js/onboarding.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

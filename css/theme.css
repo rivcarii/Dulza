@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Dulza · Tokens de diseño
+   --------------------------------------------------------------------------
+   Para cambiar la paleta basta con editar --brand y --accent (o elegirlos en
+   Ajustes › Apariencia). Todo lo demás (fondos, botones, texto de marca,
+   modo oscuro, factura) se deriva de esos dos colores.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Paleta de marca (la app los reescribe desde Ajustes) ---- */
+  --brand: #d9366f;
+  --accent: #f59e5b;
+  --brand-fill: #d9366f;   /* fondo de botones: contraste garantizado con --on-brand */
+  --on-brand: #ffffff;
+  --brand-ink: #b01e55;    /* texto de color de marca sobre superficies */
+
+  /* ---- Neutros (claro) ---- */
+  --bg: color-mix(in oklab, var(--brand) 4%, #fffaf8);
+  --sheet-bg: color-mix(in oklab, var(--brand) 4%, #f7f2f0);
+  --surface: #ffffff;
+  --surface-hi: #ffffff;
+  --ink: #2a1a23;
+  --ink-2: #6b5762;
+  --ink-3: #84707a;
+  --line: rgba(42, 26, 35, 0.1);
+  --fill: rgba(42, 26, 35, 0.06);
+  --fill-2: rgba(42, 26, 35, 0.1);
+  --seg-thumb: #ffffff;
+  --brand-soft: color-mix(in oklab, var(--brand) 12%, var(--surface));
+  --brand-soft-2: color-mix(in oklab, var(--brand) 20%, var(--surface));
+  --accent-soft: color-mix(in oklab, var(--accent) 20%, var(--surface));
+
+  /* ---- Semánticos ---- */
+  --ok: #178a55;
+  --warn: #a15c00;
+  --bad: #c8283d;
+  --info: #2f6fdb;
+  --wa: #0a7f5a;
+  --bad-fill: #c8283d;
+  --ok-ink: #0f6b40;
+  --warn-ink: #854a00;
+  --bad-ink: #a81c30;
+  --info-ink: #2358b5;
+  --ok-soft: color-mix(in oklab, var(--ok) 13%, var(--surface));
+  --warn-soft: color-mix(in oklab, #f2a31b 20%, var(--surface));
+  --bad-soft: color-mix(in oklab, var(--bad) 12%, var(--surface));
+  --info-soft: color-mix(in oklab, var(--info) 12%, var(--surface));
+
+  /* ---- Cristal (Liquid Glass) ---- */
+  --blur: 24px;
+  --glass-bg: color-mix(in oklab, var(--surface) 62%, transparent);
+  --glass-strong: color-mix(in oklab, var(--surface) 80%, transparent);
+  --glass-edge: rgba(255, 255, 255, 0.7);
+  --glass-edge-2: rgba(255, 255, 255, 0.28);
+  --shadow-s: 0 0 0 0.5px var(--line), 0 1px 2px rgba(70, 20, 45, 0.05), 0 6px 18px rgba(70, 20, 45, 0.05);
+  --shadow-m: 0 1px 2px rgba(70, 20, 45, 0.06), 0 10px 30px rgba(70, 20, 45, 0.1);
+  --shadow-l: 0 30px 80px rgba(40, 10, 28, 0.28), 0 2px 8px rgba(40, 10, 28, 0.12);
+  --scrim: rgba(28, 10, 20, 0.4);
+
+  /* ---- Formas ---- */
+  --r-s: 12px;
+  --r-m: 18px;
+  --r-l: 26px;
+  --r-xl: 36px;
+
+  /* ---- Tipografía ---- */
+  /* Tipografías de la marca (de «Letras Dulza»): Nunito para texto, Titan One para nombres y títulos */
+  --font: "Nunito", ui-rounded, -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Titan One", "Arial Rounded MT Bold", ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+
+  /* ---- Movimiento ---- */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --spring: var(--ease-drawer);
+  --spring-bounce: var(--ease-out);
+
+  /* ---- Medidas ---- */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --gutter: 16px;
+  --tabbar-h: 66px;
+  --side-w: 0px;
+}
+
+/* Resortes reales (amortiguado crítico y con rebote leve) donde linear() existe */
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --spring: linear(0, .064, .198, .347, .487, .606, .703, .78, .838, .882, .915, .939, .956, .969, .978, .985, .989, .992, .995, .996, .997, .998, 1);
+    --spring-bounce: linear(0, .056, .188, .352, .517, .666, .79, .886, .955, 1.001, 1.029, 1.042, 1.046, 1.043, 1.037, 1.03, 1.022, 1.015, 1.01, 1.005, 1.002, 1, .999, .998, .998, .998, .998, .999, .999, .999, 1);
+  }
+}
+
+/* ---- Modo oscuro ---- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: color-mix(in oklab, var(--brand) 7%, #120d10);
+  --sheet-bg: color-mix(in oklab, var(--brand) 5%, #181115);
+  --surface: color-mix(in oklab, var(--brand) 4%, #231a1f);
+  --surface-hi: color-mix(in oklab, var(--brand) 4%, #2c2228);
+  --ink: #f8eff3;
+  --ink-2: #c3aeb8;
+  --ink-3: #9d8993;
+  --line: rgba(255, 255, 255, 0.11);
+  --fill: rgba(255, 255, 255, 0.08);
+  --fill-2: rgba(255, 255, 255, 0.13);
+  --seg-thumb: #4a3c44;
+  --ok: #43cf8e;
+  --warn: #f3b44f;
+  --bad: #ff7587;
+  --info: #7eaaff;
+  --wa: #0e9468;
+  --ok-ink: #5fe0a4;
+  --warn-ink: #f6c46b;
+  --bad-ink: #ff95a3;
+  --info-ink: #9dbdff;
+  --warn-soft: color-mix(in oklab, #f2a31b 18%, var(--surface));
+  --glass-bg: color-mix(in oklab, var(--surface) 58%, transparent);
+  --glass-strong: color-mix(in oklab, var(--surface) 80%, transparent);
+  --glass-edge: rgba(255, 255, 255, 0.2);
+  --glass-edge-2: rgba(255, 255, 255, 0.07);
+  --shadow-s: 0 0 0 0.5px var(--line), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-m: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-l: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+  --scrim: rgba(0, 0, 0, 0.55);
+}
+
+/* ---- Adaptación al hardware ---- */
+
+/* Equipos modestos o ahorro de datos: menos desenfoque, mismas formas */
+:root[data-perf="lite"] {
+  --blur: 10px;
+}
+:root[data-perf="lite"] .backdrop::after { display: none; }
+
+/* Sin transparencias si el sistema lo pide */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --blur: 0px;
+    --glass-bg: var(--surface);
+    --glass-strong: var(--surface);
+  }
+}
+
+/* Contraste alto: bordes definidos */
+@media (prefers-contrast: more) {
+  :root {
+    --line: rgba(42, 26, 35, 0.4);
+    --ink-2: #4a3640;
+    --glass-bg: var(--surface);
+    --glass-strong: var(--surface);
+  }
+  :root[data-theme="dark"] {
+    --line: rgba(255, 255, 255, 0.4);
+    --ink-2: #e4d3dc;
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "./",
+  "name": "Dulza · Ventas y compras",
+  "short_name": "Dulza",
+  "description": "Ventas, compras, cobros y facturas por WhatsApp para tu emprendimiento de postres.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fff7f5",
+  "theme_color": "#fff7f5",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nueva venta",
+      "short_name": "Venta",
+      "url": "./?action=nueva-venta",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Nueva compra",
+      "short_name": "Compra",
+      "url": "./?action=nueva-compra",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Cobros pendientes",
+      "short_name": "Cobros",
+      "url": "./?action=cobros",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# Archivos generados para entregar (se rehacen con .dev/deck/build_zips.py)
+entregables/
+*.zip
+
+# Configuración local de la herramienta de desarrollo
+.claude/
+
+# Sistema
+__pycache__/
+.DS_Store
+Thumbs.db
