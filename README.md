@@ -2,7 +2,7 @@
 
 App web instalable (PWA) para llevar las ventas a plazo, las compras, los cobros y las facturas de un emprendimiento de postres. Funciona sin internet, guarda los datos en el propio dispositivo y se adapta a teléfono, tableta y computadora. Las facturas se envían por WhatsApp.
 
-HTML, CSS y JavaScript sin dependencias ni paso de compilación.
+HTML, CSS y JavaScript sin dependencias ni paso de compilación. Pide usuario y clave al abrirla (ver [LEEME.md](LEEME.md#acceso-con-usuario-y-clave)).
 
 ## Probarla en local
 

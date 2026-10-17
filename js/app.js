@@ -229,6 +229,8 @@
   async function boot() {
     await D.store.init();
     D.theme.init();
+    // nada de la app se dibuja hasta que se entra con usuario y clave
+    if (D.auth) await D.auth.gate();
     shell.build();
 
     let sig = '';
@@ -259,6 +261,11 @@
     }
 
     if (!D.data.settings.onboarded && D.onboarding) setTimeout(() => D.onboarding.open(), 250);
+    // recordatorio, una vez por sesión, mientras siga la clave por defecto
+    if (D.auth && D.auth.usingDefault() && !sessionStorage.getItem('dulza-claveaviso')) {
+      sessionStorage.setItem('dulza-claveaviso', '1');
+      setTimeout(() => D.toast('Sigues con la clave por defecto: cámbiala en Ajustes → Seguridad', { tone: 'info', icon: 'shield' }), 2400);
+    }
 
     registerWorker();
   }

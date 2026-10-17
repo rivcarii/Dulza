@@ -33,6 +33,16 @@ Para probarla en tu computadora (necesita Python): ejecuta `python .dev/serve.py
 - Cada dispositivo tiene sus propios datos. Para pasarlos de uno a otro: **Ajustes → Guardar respaldo** y **Restaurar respaldo** en el otro.
 - Haz un respaldo de vez en cuando. Si borras los datos del navegador, se pierden.
 
+## Acceso con usuario y clave
+
+- Al abrir la app pide **usuario y clave**. El usuario es `anaparr` (da igual si va en mayúsculas); la clave inicial se entrega aparte y **no está escrita en el código ni en este repositorio**.
+- Se vuelve a pedir tras **10 minutos sin usarla**, al volver de segundo plano pasado ese tiempo y con **Ajustes → Seguridad → Bloquear ahora**. Recargar la página mientras se usa no la pide otra vez.
+- **Cambiar la clave:** Ajustes → Seguridad → Cambiar clave (mínimo 8 caracteres, con letras y números). Mientras siga la clave inicial, la app lo recuerda con un aviso al entrar.
+- **Intentos fallidos:** después de 5 seguidos hay una pausa de 30 segundos, que se duplica con cada 5 más (hasta 5 minutos).
+- **Dónde vive la clave:** en `js/auth.js` solo está la huella (SHA-256 con sal y 30 000 vueltas) de la clave inicial. La clave que elija Ana se guarda como huella en este navegador (`localStorage`, entrada `dulza-auth`) y no viaja en los respaldos.
+- **Alcance:** es un candado para el dispositivo. Frena a quien tome el celular o la computadora, pero los datos guardados no están cifrados: alguien con conocimientos técnicos podría leerlos.
+- **Si se olvida la clave:** no hay recuperación por correo (la app no tiene servidor). Borrar los datos del sitio en el navegador restablece la clave inicial, pero también borra las ventas guardadas en ese dispositivo; por eso conviene guardar respaldos (Ajustes → Tus datos).
+
 ## Personalizar la marca
 
 - **Colores:** Ajustes → Apariencia (paletas listas o dos colores propios). Todo se recalcula: botones, factura, ícono, modo oscuro y contraste del texto.

@@ -49,6 +49,7 @@
     moon: '<path d="M19 14.2A7.6 7.6 0 0 1 9.8 5a7.6 7.6 0 1 0 9.2 9.2z"/>',
     app: '<rect x="6.5" y="3" width="11" height="18" rx="2.8"/><path d="M10.5 18h3"/>',
     shield: '<path d="M12 3.6 5 6.4v5.2c0 4.2 2.8 7.1 7 8.8 4.2-1.7 7-4.6 7-8.8V6.4z"/><path d="m9 12.2 2.2 2.2 3.8-4.2"/>',
+    lock: '<rect x="5" y="10.5" width="14" height="9.5" rx="2.4"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
     list: '<path d="M8.5 7h11M8.5 12h11M8.5 17h11"/><circle cx="4.7" cy="7" r="1" fill="currentColor" stroke="none"/><circle cx="4.7" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4.7" cy="17" r="1" fill="currentColor" stroke="none"/>',
   };
   D.ICONS = I;

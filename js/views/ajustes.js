@@ -94,6 +94,13 @@
       </div>
       <input type="file" id="file-img" accept="image/*" hidden>
 
+      <div class="form-title" data-rise>Seguridad</div>
+      <div class="list" data-rise>
+        <button class="row row--tap row--noavatar" data-act="auth.change"><span class="row__icon">${D.icon('shield')}</span><span class="row__main"><span class="row__title">Cambiar clave</span><span class="row__sub">${D.auth.usingDefault() ? 'Sigues con la clave por defecto: cámbiala' : 'Usuario: ' + esc(D.auth.user())}</span></span><span class="row__chev">${D.icon('chevR')}</span></button>
+        <button class="row row--tap row--noavatar" data-act="auth.lock"><span class="row__icon">${D.icon('lock')}</span><span class="row__main"><span class="row__title">Bloquear ahora</span><span class="row__sub">Vuelve a pedir usuario y clave</span></span></button>
+      </div>
+      <p class="form-note">La app pide usuario y clave al abrirla y tras 10 minutos sin usarla. Es un candado para este dispositivo: tus datos no se cifran.</p>
+
       <div class="form-title" data-rise>Tus datos</div>
       <div class="fields" data-rise>
         <div class="field" style="min-height:58px"><span style="display:flex;align-items:center;gap:10px">${D.icon(storage[2])}${esc(storage[1])}</span></div>

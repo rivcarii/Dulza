@@ -488,3 +488,37 @@
 .tab img.i--candy { width: 1.8rem; height: 1.8rem; }
 .nav-item img.i--candy { width: 1.75rem; height: 1.75rem; }
 @media (min-width: 1100px) { .nav-item img.i--candy { width: 1.6rem; height: 1.6rem; } }
+
+/* ---------- Pantalla de acceso (usuario y clave) ---------- */
+dialog.lock {
+  border: 0; padding: 0; margin: 0; width: 100%; height: 100%; max-width: none; max-height: none; overflow: auto; color: var(--ink);
+  background:
+    radial-gradient(120% 90% at 85% -10%, color-mix(in oklab, var(--accent) 32%, transparent), transparent 60%),
+    radial-gradient(100% 80% at 0% 100%, color-mix(in oklab, var(--brand) 24%, transparent), transparent 60%),
+    var(--bg);
+}
+dialog.lock[open] { display: grid; place-items: center; padding: max(20px, var(--safe-t)) max(20px, var(--safe-r)) max(20px, var(--safe-b)) max(20px, var(--safe-l)); }
+dialog.lock::backdrop { background: var(--bg); }
+dialog.lock.is-out { opacity: 0; transition: opacity 220ms var(--ease-out); }
+.lock__card {
+  width: min(400px, 100%); margin-top: 64px; display: grid; gap: 14px; justify-items: center; text-align: center; padding: 0 20px 22px;
+  border-radius: 36px; background: var(--glass-strong); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--shadow-l); animation: lock-in 420ms var(--ease-out) both;
+}
+.lock__art { margin-top: -64px; }
+.lock__mood { width: 128px; height: 128px; filter: drop-shadow(0 8px 14px rgba(60, 20, 40, 0.22)); }
+.lock__word { width: 150px; height: auto; margin-top: -4px; }
+.lock__title { font-family: var(--font-display); font-size: 1.7rem; font-weight: 400; letter-spacing: -0.03em; line-height: 1.1; }
+.lock__sub { color: var(--ink-2); max-width: 30ch; }
+.lock .fields { width: 100%; text-align: left; }
+.lock .field { position: relative; }
+.lock .field input[type="password"], .lock .field input[name="password"] { padding-right: 76px; }
+.lock__eye { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); min-height: 36px; padding: 0 12px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-ink); font-size: 0.85rem; font-weight: 700; }
+.lock__error { color: var(--bad-ink, #b3091f); font-weight: 650; font-size: 0.92rem; max-width: 34ch; }
+.lock__error[hidden] { display: none; }
+.lock__go { width: 100%; }
+.lock__card.is-shake { animation: lock-shake 380ms both; }
+.is-locked .app, .is-locked #toasts { visibility: hidden; }
+@keyframes lock-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+@keyframes lock-shake { 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .lock__card, .lock__card.is-shake { animation: none; } dialog.lock.is-out { transition: none; } }
