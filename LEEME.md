@@ -70,6 +70,21 @@ Ajustes → **Respaldo en la nube** guarda y restaura el respaldo completo (clie
 
 Mientras `CLIENT_ID` esté vacío, la sección dice «Todavía sin configurar».
 
+## Datos compartidos entre dos personas (en construcción)
+
+Plan: que dos personas, cada una con su cuenta, vean y editen los mismos datos, con copia local en cada dispositivo para vender sin internet. La nube será **Firebase (Cloud Firestore)** con acceso por correo y clave, y reglas que solo dejan entrar a las dos cuentas.
+
+Hecho (etapa 1, sin nube todavía):
+
+- **`js/sync.js`, motor de sincronización.** Cada registro lleva `updatedAt`; los borrados dejan una lápida en `D.data.deleted` (se conserva 60 días). Detecta lo que cambió en cada guardado y lo pone en una cola de envío que se reintenta sola. Los cambios del otro dispositivo se aplican en tiempo real y los choques se resuelven por registro: gana el cambio más reciente. El reloj nunca va hacia atrás respecto a lo ya visto, así que una edición hecha justo después de ver la del otro gana.
+- **Qué se comparte:** clientes, postres, ventas, compras, proveedores y los ajustes del negocio. **Se queda en cada dispositivo:** tema claro/oscuro, logo y mascota subidos, prefijo y número de factura, avisos.
+- **Numeración por serie:** el siguiente número se calcula por prefijo (`D-`, `R-`…), así que dos personas con prefijos distintos nunca repiten número.
+- **Adaptador de nube:** el motor habla con la nube por un adaptador `{ name, open(), subscribe(col, onDocs, onError), write(col, doc), close() }`. Está probado con una nube simulada: subida inicial, cambios remotos, ediciones viejas que se ignoran, borrados en ambos sentidos, lápidas que impiden «resucitar» registros, modo sin conexión con recuperación, ajustes compartidos y dispositivo nuevo que descarga todo.
+
+Falta (etapa 2, necesita el proyecto de Firebase): el adaptador de Firestore, el acceso con correo y clave, la pantalla para conectar y elegir qué hacer con los datos de este dispositivo, el indicador de estado y el aviso al borrar datos compartidos.
+
+Límites previstos: si dos personas editan **el mismo registro** a la vez, se queda el más reciente (por ejemplo, un abono hecho en dos celulares sobre la misma venta); y los datos de los clientes quedarán en un proyecto de Google Cloud administrado por quien lo cree.
+
 ## Publicar en GitHub Pages
 
 La app es un sitio estático, así que GitHub Pages la sirve tal cual:

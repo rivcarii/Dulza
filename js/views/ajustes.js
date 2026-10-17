@@ -71,6 +71,7 @@
         <label class="field"><span>Plazo habitual</span><select data-change="set" data-key="defaultTerm" data-type="int">${[[0, 'Contado'], [8, '8 días'], [15, '15 días'], [30, '30 días']].map(([v, l]) => `<option value="${v}" ${s.defaultTerm === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
         ${area('Condiciones al pie de la factura', 'terms', 3)}
       </div>
+      <p class="form-note">La numeración es por prefijo. Si dos personas usan la app con los mismos datos, cada una debe tener su propio prefijo (por ejemplo «D-» y «R-») para que los números de factura no se repitan.</p>
 
       <div class="form-title" data-rise>Mensajes de WhatsApp</div>
       <div class="fields" data-rise>${area('Al enviar una factura', 'waInvoice', 6, 'tpl')}${chips('waInvoice')}${area('Al recordar un cobro', 'waReminder', 6, 'tpl')}${chips('waReminder')}</div>

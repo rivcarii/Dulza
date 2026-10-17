@@ -75,6 +75,7 @@
     sales: [],
     suppliers: [],
     purchases: [],
+    deleted: [], // lápidas de registros borrados {col, id, at}: sirven para que un borrado también llegue al otro dispositivo
   };
   const KEYS = Object.keys(D.data);
 
@@ -181,11 +182,15 @@
       try {
         navigator.storage && navigator.storage.persist && navigator.storage.persist();
       } catch (e) {}
+      if (D.store.afterLoad) D.store.afterLoad(); // sync.js toma la «foto» inicial para detectar cambios por registro
       window.addEventListener('pagehide', flush);
       document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flush());
     },
     commit(...keys) {
-      (keys.length ? keys : KEYS).forEach((k) => dirty.add(k));
+      const ks = keys.length ? keys : KEYS;
+      // sync.js sella con fecha los registros nuevos o cambiados y anota los borrados (devuelve las colecciones extra tocadas)
+      const extra = D.store.track ? D.store.track(ks) : [];
+      ks.concat(extra).forEach((k) => dirty.add(k));
       clearTimeout(timer);
       timer = setTimeout(flush, 120);
       emit();
@@ -247,9 +252,11 @@
     number(seq) {
       return D.data.settings.invoicePrefix + String(seq).padStart(4, '0');
     },
+    // La numeración es por serie (prefijo): cada persona usa el suyo («D-», «R-»…) y así dos dispositivos nunca repiten número.
     nextSeq() {
       const S = D.data.settings;
-      const max = D.data.sales.reduce((m, s) => Math.max(m, s.seq || 0), 0);
+      const pre = S.invoicePrefix || '';
+      const max = D.data.sales.reduce((m, s) => (String(s.number || '').startsWith(pre) ? Math.max(m, s.seq || 0) : m), 0);
       return Math.max(S.nextInvoice || 1, max + 1);
     },
     customer: (s) => D.data.customers.find((c) => c.id === s.customerId),
