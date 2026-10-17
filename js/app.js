@@ -267,6 +267,8 @@
       setTimeout(() => D.toast('Sigues con la clave por defecto: cámbiala en Ajustes → Seguridad', { tone: 'info', icon: 'shield' }), 2400);
     }
 
+    if (D.drive) D.drive.remind();
+
     registerWorker();
   }
 

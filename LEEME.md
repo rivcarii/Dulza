@@ -50,6 +50,26 @@ Para probarla en tu computadora (necesita Python): ejecuta `python .dev/serve.py
 - **Valores por defecto de la marca** (para cuando ya tengan su paleta definitiva): `js/store.js` (`D.PALETTES`, `D.defaults`) y `css/theme.css` (`--brand`, `--accent`).
 - **Ícono de la app** (`assets/icon-*.png`, `apple-touch-icon.png`, `favicon-*.png`): están hechos a partir del personaje (`assets/brand/gpt/v3/personaje.png`) sobre un mosaico rosa. Si cambias esa imagen hay que regenerarlos (`P.makeBrand()` de `.dev/proc.js`); no se actualizan solos.
 
+## Respaldo en Google Drive
+
+Ajustes → **Respaldo en la nube** guarda y restaura el respaldo completo (clientes, ventas, compras, postres, ajustes y logo) en el Drive de la persona que use la app.
+
+- **Dónde queda:** en la carpeta oculta de la app (`appDataFolder`), con el archivo `dulza-respaldo.json`. No aparece en «Mi unidad» y solo esta app puede leerlo. Se puede quitar desde la cuenta de Google (Seguridad → Conexiones de terceros).
+- **Qué hace:** *Guardar ahora en Drive* sube el respaldo (reemplaza al anterior), *Restaurar desde Drive* trae el último y reemplaza los datos del dispositivo (pide confirmación y muestra la fecha). La app avisa al entrar si pasaron más de 7 días sin guardar.
+- **Pasar los datos a otro dispositivo:** guardar en uno, abrir la app en el otro, conectar la misma cuenta de Google y restaurar.
+- **Alcance:** es un respaldo, no una sincronización en tiempo real: no mezcla cambios hechos a la vez en dos dispositivos. Cada cuenta de Google ve solo su propio respaldo.
+- **Internet:** solo hace falta al guardar o restaurar; el inicio de sesión de Google se carga al tocar «Conectar».
+
+### Configurarlo (una sola vez, en Google Cloud)
+
+1. Entrar a <https://console.cloud.google.com/> con la cuenta de Google que será dueña del proyecto y crear un proyecto llamado `Dulza`.
+2. **APIs y servicios → Biblioteca**: buscar **Google Drive API** y pulsar **Habilitar**.
+3. **APIs y servicios → Pantalla de consentimiento de OAuth** (o *Google Auth Platform*): tipo de usuario **Externo**, nombre `Dulza`, correo de soporte y de contacto. En **Alcances** agregar `.../auth/drive.appdata` (más `openid` y `email`). En **Usuarios de prueba** agregar los correos que usarán la app y, para que el permiso no caduque, **Publicar la aplicación** (esos alcances no son sensibles: no pide verificación de Google).
+4. **APIs y servicios → Credenciales → Crear credenciales → ID de cliente de OAuth**: tipo **Aplicación web**; en **Orígenes de JavaScript autorizados** poner `https://rivcarii.github.io` (solo el dominio, sin ruta) y, para pruebas locales, `http://localhost:5173`.
+5. Copiar el **ID de cliente** (termina en `.apps.googleusercontent.com`; es público, **no** hace falta el secreto) y pegarlo en `CLIENT_ID` al inicio de `js/drive.js`. Subir la versión (`python .dev/version.py ...`) y publicar.
+
+Mientras `CLIENT_ID` esté vacío, la sección dice «Todavía sin configurar».
+
 ## Publicar en GitHub Pages
 
 La app es un sitio estático, así que GitHub Pages la sirve tal cual:

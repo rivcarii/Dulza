@@ -101,6 +101,9 @@
       </div>
       <p class="form-note">La app pide usuario y clave al abrirla y tras 10 minutos sin usarla. Es un candado para este dispositivo: tus datos no se cifran.</p>
 
+      <div class="form-title" data-rise>Respaldo en la nube</div>
+      ${D.drive.rows()}
+
       <div class="form-title" data-rise>Tus datos</div>
       <div class="fields" data-rise>
         <div class="field" style="min-height:58px"><span style="display:flex;align-items:center;gap:10px">${D.icon(storage[2])}${esc(storage[1])}</span></div>
