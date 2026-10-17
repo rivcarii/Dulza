@@ -522,3 +522,15 @@ dialog.lock.is-out { opacity: 0; transition: opacity 220ms var(--ease-out); }
 @keyframes lock-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
 @keyframes lock-shake { 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
 @media (prefers-reduced-motion: reduce) { .lock__card, .lock__card.is-shake { animation: none; } dialog.lock.is-out { transition: none; } }
+
+/* ---------- Estado de la sincronización ---------- */
+.sync-chip { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; padding: 6px 10px; border-radius: 12px; background: var(--fill); color: var(--ink-2); font-size: 0.78rem; font-weight: 650; line-height: 1.2; width: fit-content; max-width: 100%; }
+.sync-chip i { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--ink-3); }
+.sync-chip[data-s="online"] i { background: var(--ok, #178a55); }
+.sync-chip[data-s="connecting"] i { background: var(--info, #2f6fdb); animation: sync-pulse 1.1s ease-in-out infinite; }
+.sync-chip[data-s="offline"] i { background: var(--warn, #c98a00); }
+.sync-chip[data-s="error"] i { background: var(--bad, #c8283d); }
+.sidebar__foot .sync-chip { width: 100%; margin: 0; }
+@media (min-width: 700px) and (max-width: 1099px) { .sidebar__foot .sync-chip { padding: 8px 0; } .sidebar__foot .sync-chip span { display: none; } }
+@keyframes sync-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .sync-chip[data-s="connecting"] i { animation: none; } }

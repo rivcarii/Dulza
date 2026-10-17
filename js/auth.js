@@ -97,11 +97,30 @@
   const usingDefault = () => !readJSON(ls, K_AUTH);
   const norm = (u) => String(u || '').trim().toLowerCase();
   const tick = () => new Promise((r) => setTimeout(r, 30)); // deja pintar «Entrando…» antes de calcular
+  const cloudLinked = () => !!(D.cloud && D.cloud.linked());
+  const newSalt = () => 'dulza:' + Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, '0')).join('');
+  /* Guarda la huella de una clave validada por la nube: así se puede entrar sin internet con la misma clave */
+  function remember(user, pass) {
+    const salt = newSalt();
+    ls.set(K_AUTH, JSON.stringify({ u: norm(user).split('@')[0], s: salt, h: derive(String(pass), salt), c: 1, t: Date.now() }));
+  }
+  /* Orden: 1) la clave guardada en este dispositivo (la de fábrica solo vale mientras no haya nube vinculada);
+     2) las cuentas de la nube, si hay internet. Devuelve {ok, network?, message?}. */
   async function check(user, pass) {
     await tick();
     const r = record();
     const okHash = same(derive(String(pass || ''), r.s), r.h); // se calcula siempre, aunque el usuario no coincida
-    return okHash && norm(user) === r.u;
+    if (okHash && norm(user) === r.u && (r.c || !cloudLinked())) return { ok: true };
+    if (D.cloud && D.cloud.configured) {
+      try {
+        await D.cloud.signIn(user, pass);
+        remember(user, pass);
+        return { ok: true, cloud: true };
+      } catch (e) {
+        return { ok: false, network: !!(e && e.network), message: e && e.userMessage };
+      }
+    }
+    return { ok: false };
   }
 
   /* ---------- Intentos fallidos: pausa creciente ---------- */
@@ -185,9 +204,14 @@
       if (!user.value.trim() || !pass.value) return say('Escribe tu usuario y tu clave.', 'think');
       go.disabled = true;
       go.textContent = 'Entrando…';
-      const ok = await check(user.value, pass.value);
+      const res = await check(user.value, pass.value);
       go.textContent = 'Entrar';
-      if (!ok) {
+      if (!res.ok && res.network) {
+        // sin internet no se puede comprobar con la nube: no cuenta como intento fallido
+        go.disabled = false;
+        return say('No pude comprobar tu clave por internet. Sin conexión solo entra con la clave que ya usaste en este dispositivo.', 'think');
+      }
+      if (!res.ok) {
         fail();
         pass.value = '';
         pass.focus();
@@ -196,7 +220,7 @@
         form.classList.add('is-shake');
         if (waitLeft()) return countdown();
         go.disabled = false;
-        return say('Usuario o clave incorrectos. Inténtalo de nuevo.', 'sad');
+        return say(res.message && !/incorrectos/.test(res.message) ? res.message : 'Usuario o clave incorrectos. Inténtalo de nuevo.', 'sad');
       }
       clearFails();
       open();
@@ -268,9 +292,14 @@
       if (nueva.length < 8 || !/[A-Za-z]/.test(nueva) || !/\d/.test(nueva)) return say('La clave nueva debe tener al menos 8 caracteres, con letras y números.');
       if (nueva !== val('rep')) return say('Las dos claves nuevas no son iguales.');
       say('');
-      if (!(await check(record().u, val('cur')))) return say('La clave actual no es correcta.');
-      const salt = 'dulza:' + Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, '0')).join('');
-      ls.set(K_AUTH, JSON.stringify({ u: record().u, s: salt, h: derive(nueva, salt), t: Date.now() }));
+      const r0 = record();
+      const viaCloud = cloudLinked();
+      if (viaCloud) {
+        // con la nube vinculada, la clave se cambia en la cuenta (necesita internet) y luego se guarda su huella aquí
+        try { await D.cloud.changePassword(val('cur'), nueva); } catch (e) { return say(e.network ? 'Para cambiar la clave necesitas internet.' : e.userMessage || 'No se pudo cambiar la clave.'); }
+      } else if (!(await check(r0.u, val('cur'))).ok) return say('La clave actual no es correcta.');
+      const salt = newSalt();
+      ls.set(K_AUTH, JSON.stringify({ u: r0.u, s: salt, h: derive(nueva, salt), c: viaCloud ? 1 : undefined, t: Date.now() }));
       sh.close();
       D.toast('Clave cambiada', { icon: 'shield' });
       D.router.render({ force: true });
@@ -279,5 +308,5 @@
 
   D.act['auth.change'] = changePassword;
   D.act['auth.lock'] = lock;
-  D.auth = { gate, lock, unlocked, usingDefault, user: () => record().u, _derive: derive, _sha256: (s) => hex(sha256(enc(s))), _salt: SALT };
+  D.auth = { gate, lock, unlocked, usingDefault, remember, user: () => record().u, _derive: derive, _sha256: (s) => hex(sha256(enc(s))), _salt: SALT };
 })();

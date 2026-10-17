@@ -37,6 +37,7 @@
         <div class="nav-group">${main.map(item).join('')}</div>
         ${Object.entries(groups).map(([g, list]) => `<div class="nav-group"><p class="nav-group__title">${esc(g)}</p>${list.map(item).join('')}</div>`).join('')}
         <div class="sidebar__foot">
+          ${D.cloud ? D.cloud.chip() : ''}
           <button class="nav-install" data-act="app.install" hidden>${D.icon('download')}<span>Instalar app</span></button>
           <p class="sidebar__hint"><kbd>N</kbd> nueva venta · <kbd>/</kbd> buscar</p>
         </div>`;
@@ -268,6 +269,7 @@
     }
 
     if (D.drive) D.drive.remind();
+    if (D.cloud) D.cloud.boot(); // si el dispositivo está vinculado, retoma la sincronización
 
     registerWorker();
   }

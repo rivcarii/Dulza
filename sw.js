@@ -2,7 +2,7 @@
    Guarda la app en el dispositivo para que abra al instante y funcione sin internet.
    IMPORTANTE: cada vez que cambies cualquier archivo y lo vuelvas a publicar, sube el número de VERSION
    para que los dispositivos descarguen la actualización. */
-const VERSION = 'dulza-v1.8.0';
+const VERSION = 'dulza-v1.9.0';
 const FONT_CACHE = 'dulza-fonts';
 const GPT = 'assets/brand/gpt/';
 const pad = (n) => String(n).padStart(2, '0');
@@ -18,6 +18,7 @@ const ASSETS = [
   'js/core.js',
   'js/store.js',
   'js/sync.js',
+  'js/cloud.js',
   'js/theme.js',
   'js/art.js',
   'js/character.js',
@@ -99,8 +100,9 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  // Tipografías de la marca (Google Fonts): se guardan la primera vez para que funcionen sin internet
-  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+  // Tipografías de la marca (Google Fonts) y SDK de Firebase (versión fija en la URL): se guardan la primera vez
+  // para que funcionen sin internet
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com' || (url.hostname === 'www.gstatic.com' && url.pathname.startsWith('/firebasejs/'))) {
     event.respondWith(
       caches.open(FONT_CACHE).then(async (cache) => {
         const hit = await cache.match(req);

@@ -4,6 +4,8 @@
   const D = window.D;
   const { $, $$, esc } = D;
   const S = () => D.data.settings;
+  // con el negocio compartido, estas acciones también llegan a la otra persona
+  const shared = () => (D.sync && D.sync.linked() ? ' Como el negocio está compartido, el cambio también le llega a la otra persona.' : '');
 
   /* ---------- Más (teléfono) ---------- */
   D.views.mas = {
@@ -13,7 +15,7 @@
       return D.ui.page({
         title: 'Más',
         cls: 'page--narrow',
-        body: `<div class="more-hero card" data-rise>${`<div style="width:72px;flex:none">${D.art.mascot({ cls: 'mascot--alive', mood: 'hello' })}</div>`}<div><p style="font-weight:750;font-size:1.15rem;letter-spacing:-.02em">${esc(S().name)}</p><p class="muted" style="font-size:.9rem">${esc(S().tagline || 'Ventas y compras')}</p></div></div>
+        body: `<div class="more-hero card" data-rise>${`<div style="width:72px;flex:none">${D.art.mascot({ cls: 'mascot--alive', mood: 'hello' })}</div>`}<div><p style="font-weight:750;font-size:1.15rem;letter-spacing:-.02em">${esc(S().name)}</p><p class="muted" style="font-size:.9rem">${esc(S().tagline || 'Ventas y compras')}</p>${D.cloud ? D.cloud.chip() : ''}</div></div>
           <div class="form-title">Catálogo</div>
           <div class="list" data-rise>
             ${row('clientes', 'users', 'Clientes', D.plural(D.data.customers.length, 'cliente', 'clientes'))}
@@ -101,6 +103,9 @@
         <button class="row row--tap row--noavatar" data-act="auth.lock"><span class="row__icon">${D.icon('lock')}</span><span class="row__main"><span class="row__title">Bloquear ahora</span><span class="row__sub">Vuelve a pedir usuario y clave</span></span></button>
       </div>
       <p class="form-note">La app pide usuario y clave al abrirla y tras 10 minutos sin usarla. Es un candado para este dispositivo: tus datos no se cifran.</p>
+
+      <div class="form-title" data-rise>Datos compartidos</div>
+      ${D.cloud.rows()}
 
       <div class="form-title" data-rise>Respaldo en la nube</div>
       ${D.drive.rows()}
@@ -230,7 +235,7 @@
         } catch (err) {
           return D.alert('Archivo no válido', 'Ese archivo no es un respaldo de Dulza.');
         }
-        if (await D.confirm({ title: '¿Restaurar este respaldo?', message: 'Reemplazará todos los datos actuales de este dispositivo.', ok: 'Restaurar', danger: true })) {
+        if (await D.confirm({ title: '¿Restaurar este respaldo?', message: 'Reemplazará todos los datos actuales de este dispositivo.' + shared(), ok: 'Restaurar', danger: true })) {
           try {
             D.store.importJSON(txt);
             D.theme.apply();
@@ -252,12 +257,12 @@
   D.act['data.import'] = () => $('#file-json').click();
   D.act['data.demo'] = async () => {
     const has = D.data.sales.length || D.data.customers.length;
-    if (has && !(await D.confirm({ title: '¿Cargar datos de ejemplo?', message: 'Reemplazará tus ventas, compras, clientes y postres actuales.', ok: 'Reemplazar', danger: true }))) return;
+    if (has && !(await D.confirm({ title: '¿Cargar datos de ejemplo?', message: 'Reemplazará tus ventas, compras, clientes y postres actuales.' + shared(), ok: 'Reemplazar', danger: true }))) return;
     D.demo.load();
     D.toast('Datos de ejemplo cargados', { icon: 'sparkle' });
   };
   D.act['data.clear'] = async () => {
-    if (await D.confirm({ title: '¿Borrar todos los datos?', message: 'Se eliminarán ventas, compras, clientes, postres y proveedores. Tus ajustes se conservan. Esto no se puede deshacer.', ok: 'Borrar todo', danger: true })) {
+    if (await D.confirm({ title: '¿Borrar todos los datos?', message: 'Se eliminarán ventas, compras, clientes, postres y proveedores. Tus ajustes se conservan. Esto no se puede deshacer.' + shared(), ok: 'Borrar todo', danger: true })) {
       D.demo.clear();
       D.toast('Datos borrados', { tone: 'info', icon: 'trash' });
     }

@@ -81,7 +81,16 @@ Hecho (etapa 1, sin nube todavía):
 - **Numeración por serie:** el siguiente número se calcula por prefijo (`D-`, `R-`…), así que dos personas con prefijos distintos nunca repiten número.
 - **Adaptador de nube:** el motor habla con la nube por un adaptador `{ name, open(), subscribe(col, onDocs, onError), write(col, doc), close() }`. Está probado con una nube simulada: subida inicial, cambios remotos, ediciones viejas que se ignoran, borrados en ambos sentidos, lápidas que impiden «resucitar» registros, modo sin conexión con recuperación, ajustes compartidos y dispositivo nuevo que descarga todo.
 
-Falta (etapa 2, necesita el proyecto de Firebase): el adaptador de Firestore, el acceso con correo y clave, la pantalla para conectar y elegir qué hacer con los datos de este dispositivo, el indicador de estado y el aviso al borrar datos compartidos.
+Hecho (etapa 2, `js/cloud.js`; probado solo con un Firebase simulado, falta probarlo con el real):
+
+- **Proyecto Firebase `dulza`** (`dulza-ab94d`): acceso por correo y clave con el registro abierto desactivado, Firestore (edición Standard, São Paulo, modo producción) y reglas que solo dejan leer y escribir `negocios/dulza/**` a cuentas con correo `@dulza.app`. Las cuentas (`anaparr`, `rivcarii`) se crean a mano en Authentication → Usuarios.
+- **Acceso:** el usuario es lo de antes de la arroba (`anaparr` entra como `anaparr@dulza.app`). La pantalla de acceso comprueba primero la clave guardada en el dispositivo (solo su huella) y, si no coincide, la cuenta de la nube. Mientras el dispositivo no esté vinculado sigue valiendo la clave de fábrica; una vez vinculado, ya no. Sin internet entra con la clave que ya se usó aquí.
+- **Conectar:** al entrar con una cuenta de la nube, la primera vez se sube lo de este dispositivo; si ya hay datos compartidos y también locales, se pregunta si usar los compartidos o unir. Cada persona recibe su prefijo de factura (`D-` para anaparr, la inicial del usuario para el resto, p. ej. `R-`).
+- **Estado:** indicador «Sincronizado / Sin conexión · N por subir / Error» en la barra lateral, en «Más» y en Ajustes → Datos compartidos (sincronizar ahora, desconectar). Borrar, restaurar o cargar ejemplos avisa de que también llega a la otra persona.
+- **Sin internet:** el service worker guarda el SDK de Firebase la primera vez; los cambios hechos sin conexión suben solos al volver.
+- **Pruebas:** `.dev/fake-firebase.js` es un Firebase de mentira para probar `cloud.js` y `sync.js` desde el navegador.
+
+Pendiente: probar con el Firebase real (entrar, vincular dos dispositivos, cortar y volver la conexión) y la caché del SDK sin internet.
 
 Límites previstos: si dos personas editan **el mismo registro** a la vez, se queda el más reciente (por ejemplo, un abono hecho en dos celulares sobre la misma venta); y los datos de los clientes quedarán en un proyecto de Google Cloud administrado por quien lo cree.
 

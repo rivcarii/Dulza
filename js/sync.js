@@ -123,6 +123,7 @@
   }
 
   /* ---------- Cambios que llegan de la nube ---------- */
+  const seen = new Map(); // 'col:id' -> updatedAt que ya tiene la nube (para no volver a subir lo que ya está)
   function onRemote(col, docs) {
     let changed = false, tombChanged = false;
     applying = true;
@@ -131,6 +132,7 @@
         if (!r || r.id == null) return;
         observe(r.updatedAt);
         const rts = +r.updatedAt || 0;
+        seen.set(key(col, r.id), Math.max(rts, seen.get(key(col, r.id)) || 0));
         if (col === 'settings') {
           const S = D.data.settings;
           if (rts > (S.updatedAt || 0)) {
@@ -178,8 +180,15 @@
     clearTimeout(pushTimer);
     pushTimer = setTimeout(push, ms);
   }
+  // Sin conexión, las escrituras de Firestore se quedan esperando: se corta la espera para marcar «sin conexión» y reintentar.
+  const withTimeout = (p, ms) =>
+    new Promise((res, rej) => {
+      const t = setTimeout(() => rej(Object.assign(new Error('offline: tiempo agotado'), { code: 'unavailable' })), ms);
+      p.then((v) => { clearTimeout(t); res(v); }, (e) => { clearTimeout(t); rej(e); });
+    });
   async function push() {
     if (!sync.adapter || pushing || sync.status === 'off' || sync.status === 'connecting') return;
+    if (pending.size && navigator.onLine === false) return fail(new Error('offline'));
     pushing = true;
     try {
       for (const k of Array.from(pending)) {
@@ -187,7 +196,7 @@
         const col = k.slice(0, at), id = k.slice(at + 1);
         const doc = docFor(col, id);
         if (!doc) { pending.delete(k); continue; }
-        await sync.adapter.write(col, doc);
+        await withTimeout(sync.adapter.write(col, doc), 15000);
         const cur = docFor(col, id);
         if (!cur || cur.updatedAt === doc.updatedAt) pending.delete(k); // si cambió mientras subía, se queda para el próximo envío
         saveMeta();
@@ -223,7 +232,7 @@
   }
 
   /* ---------- API ---------- */
-  let unsubs = [];
+  let unsubs = [], connectTimer = 0;
   const sync = (D.sync = {
     status: 'off', // off | connecting | online | offline | error
     error: '',
@@ -239,6 +248,11 @@
       sync.stop(true);
       sync.adapter = adapter;
       setStatus('connecting');
+      // si en 12 segundos no llega el estado inicial, se muestra «sin conexión» (la suscripción sigue esperando)
+      clearTimeout(connectTimer);
+      connectTimer = setTimeout(() => {
+        if (sync.status === 'connecting') { sync.error = 'Sin conexión'; setStatus('offline'); }
+      }, 12000);
       try {
         await adapter.open();
         const first = !meta.linked;
@@ -249,6 +263,7 @@
             (docs) => {
               onRemote(col, docs);
               if (waiting.delete(col) && !waiting.size) {
+                clearTimeout(connectTimer);
                 if (first) { sync.markAll(); meta.linked = true; }
                 meta.enabled = true;
                 saveMeta();
@@ -269,6 +284,7 @@
       unsubs = [];
       clearTimeout(pushTimer);
       clearTimeout(retryTimer);
+      clearTimeout(connectTimer);
       if (sync.adapter && sync.adapter.close) { try { sync.adapter.close(); } catch (e) {} }
       sync.adapter = null;
       if (!quiet) { meta.enabled = false; saveMeta(); }
@@ -284,15 +300,16 @@
     /* Pone en la cola de envío todo lo que hay en el dispositivo */
     markAll() {
       const S = D.data.settings;
+      const need = (k, at) => (seen.get(k) || 0) < at; // lo que la nube ya tiene igual o más nuevo no se vuelve a subir
       if (!S.updatedAt) S.updatedAt = clock();
-      pending.add(key('settings', 'main'));
+      if (need(key('settings', 'main'), S.updatedAt)) pending.add(key('settings', 'main'));
       COLS.forEach((c) =>
         D.data[c].forEach((d) => {
           if (!d.updatedAt) d.updatedAt = clock();
-          pending.add(key(c, d.id));
+          if (need(key(c, d.id), d.updatedAt)) pending.add(key(c, d.id));
         })
       );
-      D.data.deleted.forEach((t) => pending.add(key(t.col, t.id)));
+      D.data.deleted.forEach((t) => { if (need(key(t.col, t.id), t.at)) pending.add(key(t.col, t.id)); });
       saveMeta();
       D.store.commit(...COLS);
     },
