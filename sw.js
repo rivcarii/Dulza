@@ -2,7 +2,7 @@
    Guarda la app en el dispositivo para que abra al instante y funcione sin internet.
    IMPORTANTE: cada vez que cambies cualquier archivo y lo vuelvas a publicar, sube el número de VERSION
    para que los dispositivos descarguen la actualización. */
-const VERSION = 'dulza-v1.6.0';
+const VERSION = 'dulza-v1.6.1';
 const FONT_CACHE = 'dulza-fonts';
 const GPT = 'assets/brand/gpt/';
 const pad = (n) => String(n).padStart(2, '0');
@@ -62,8 +62,21 @@ const ASSETS = [
   'assets/icon-maskable-512.png',
 ];
 
+// Al instalar se pide cada archivo saltándose la caché HTTP (GitHub Pages guarda 10 minutos): así una versión nueva
+// nunca se queda con archivos viejos mezclados.
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(ASSETS)));
+  event.waitUntil(
+    caches.open(VERSION).then((cache) =>
+      Promise.all(
+        ASSETS.map((url) =>
+          fetch(new Request(url, { cache: 'reload' })).then((res) => {
+            if (!res.ok) throw new Error(`${res.status} ${url}`);
+            return cache.put(url, res);
+          })
+        )
+      )
+    )
+  );
 });
 
 self.addEventListener('activate', (event) => {

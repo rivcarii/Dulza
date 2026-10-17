@@ -289,6 +289,10 @@
               },
             },
           });
+        // busca versiones nuevas al volver a la app y cada media hora, para que las apps instaladas se enteren solas
+        const look = () => reg.update().catch(() => {});
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) look(); });
+        setInterval(look, 30 * 60 * 1000);
         if (reg.waiting && navigator.serviceWorker.controller) notify(reg.waiting);
         reg.addEventListener('updatefound', () => {
           const w = reg.installing;

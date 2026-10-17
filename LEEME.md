@@ -50,9 +50,23 @@ Para probarla en tu computadora (necesita Python): ejecuta `python .dev/serve.py
 - **Valores por defecto de la marca** (para cuando ya tengan su paleta definitiva): `js/store.js` (`D.PALETTES`, `D.defaults`) y `css/theme.css` (`--brand`, `--accent`).
 - **Ícono de la app** (`assets/icon-*.png`, `apple-touch-icon.png`, `favicon-*.png`): están hechos a partir del personaje (`assets/brand/gpt/v3/personaje.png`) sobre un mosaico rosa. Si cambias esa imagen hay que regenerarlos (`P.makeBrand()` de `.dev/proc.js`); no se actualizan solos.
 
+## Publicar en GitHub Pages
+
+La app es un sitio estático, así que GitHub Pages la sirve tal cual:
+
+1. En el repositorio: **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` / `(root)` → Save**.
+2. Al cabo de uno o dos minutos queda en `https://rivcarii.github.io/Dulza/` (la dirección aparece arriba en esa misma pantalla).
+3. En el celular se abre esa dirección y se instala (iPhone: Compartir → Agregar a inicio; Android: menú → Instalar app). La dirección debe ser `https`, y Pages ya lo es.
+
+Todas las rutas de la app son relativas, por eso funciona en la subcarpeta `/Dulza/`. `.nojekyll` evita que Pages procese los archivos y `robots.txt` junto con la etiqueta `noindex` piden a los buscadores que no la indexen. Los datos siguen guardándose en cada dispositivo (ver «Tus datos»).
+
 ## Al publicar una actualización
 
-Sube el número `VERSION` en `sw.js` (por ejemplo `dulza-v1.0.1`). Así los celulares avisan «Hay una versión nueva» y se actualizan.
+1. Sube la versión en los dos lugares con un solo comando: `python .dev/version.py 1.7.0` (cambia `VERSION` en `sw.js` y `D.version` en `js/core.js`).
+2. `git add -A`, `git commit` y `git push`. Pages tarda uno o dos minutos en publicar.
+3. Las apps instaladas buscan versión nueva al abrirse, al volver a primer plano y cada media hora. Cuando la encuentran avisan «Hay una versión nueva de Dulza» con el botón **Actualizar**; al tocarlo se recarga sin pedir la clave otra vez.
+
+Si no se sube el número de versión, los dispositivos conservan los archivos guardados y no se enteran del cambio.
 
 ## Estructura
 
