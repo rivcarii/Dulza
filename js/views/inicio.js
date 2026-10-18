@@ -177,7 +177,7 @@
         sub: '',
         left: `<span class="navbar__brand">${D.art.logo({ size: 34 })}</span>`,
         actions: `<button class="icon-btn glass" data-go="ajustes" aria-label="Ajustes">${D.icon('sliders')}</button>`,
-        body: empty ? `<div class="dash">${emptyHero}</div>` : `<div class="dash">${hero}${kpis}${quick}${chart}${dueCard}${topCard}${actCard}</div>`,
+        body: empty ? `<div class="dash">${emptyHero}</div>` : `<div class="dash">${hero}${kpis}${D.guide ? D.guide.card() : ''}${quick}${chart}${dueCard}${topCard}${actCard}</div>`,
       });
     },
 

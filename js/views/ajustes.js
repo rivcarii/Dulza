@@ -26,6 +26,7 @@
           <div class="list" data-rise>${row('reportes', 'chart', 'Reportes', 'Ganancias, mejores clientes y más')}</div>
           <div class="form-title">App</div>
           <div class="list" data-rise>
+            <button class="row row--tap" data-act="guide.open"><span class="row__icon">${D.icon('sparkle')}</span><span class="row__main"><span class="row__title">Ayuda de Dulce</span><span class="row__sub">Guía paso a paso y preguntas frecuentes</span></span><span class="row__chev">${D.icon('chevR')}</span></button>
             ${row('ajustes', 'sliders', 'Ajustes', 'Negocio, factura, apariencia y datos')}
             ${D.install.standalone ? '' : `<button class="row row--tap" data-act="app.install"><span class="row__icon">${D.icon('download')}</span><span class="row__main"><span class="row__title">Instalar app</span><span class="row__sub">Agrégala a tu pantalla de inicio</span></span><span class="row__chev">${D.icon('chevR')}</span></button>`}
           </div>`,

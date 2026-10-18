@@ -2,7 +2,7 @@
    Guarda la app en el dispositivo para que abra al instante y funcione sin internet.
    IMPORTANTE: cada vez que cambies cualquier archivo y lo vuelvas a publicar, sube el número de VERSION
    para que los dispositivos descarguen la actualización. */
-const VERSION = 'dulza-v1.12.3';
+const VERSION = 'dulza-v1.13.0';
 const FONT_CACHE = 'dulza-fonts';
 const GPT = 'assets/brand/gpt/';
 const pad = (n) => String(n).padStart(2, '0');
@@ -39,6 +39,7 @@ const ASSETS = [
   'js/views/reportes.js',
   'js/views/ajustes.js',
   'js/auth.js',
+  'js/guide.js',
   'js/onboarding.js',
   'js/app.js',
   'assets/favicon-64.png',

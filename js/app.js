@@ -38,6 +38,7 @@
         ${Object.entries(groups).map(([g, list]) => `<div class="nav-group"><p class="nav-group__title">${esc(g)}</p>${list.map(item).join('')}</div>`).join('')}
         <div class="sidebar__foot">
           ${D.cloud ? D.cloud.chip() : ''}
+          <button class="nav-help" data-act="guide.open">${D.icon('sparkle')}<span>Ayuda de Dulce</span></button>
           <button class="nav-install" data-act="app.install" hidden>${D.icon('download')}<span>Instalar app</span></button>
           <p class="sidebar__hint"><kbd>N</kbd> nueva venta · <kbd>/</kbd> buscar</p>
         </div>`;
@@ -262,6 +263,7 @@
     }
 
     if (!D.data.settings.onboarded && D.onboarding) setTimeout(() => D.onboarding.open(), 250);
+    else if (D.guide) D.guide.offer(); // si ya pasó la bienvenida y aún no vende, ofrece la guía una sola vez
     // recordatorio, una vez por sesión, mientras siga la clave por defecto
     if (D.auth && D.auth.usingDefault() && !sessionStorage.getItem('dulza-claveaviso')) {
       sessionStorage.setItem('dulza-claveaviso', '1');
