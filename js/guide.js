@@ -606,6 +606,7 @@
       footer: `<form class="guide__form" autocomplete="off"><input class="guide__in" name="q" placeholder="Escribe: «vender», «cobrar», «comprar»…" enterkeyhint="send" autocomplete="off" aria-label="Escribe lo que necesitas"><button class="btn btn--sm" type="submit">Enviar</button></form>`,
       onClose: () => { sh = null; V = P = null; },
     });
+    sh.body.style.paddingTop = '0'; // el encabezado fijo del chat llega hasta el borde: nada se asoma por encima al desplazar
     sh.el.addEventListener('click', (e) => {
       if (e.target.closest('[data-gnew]')) {
         // nuevo chat: se borra la conversación y vuelve el menú
