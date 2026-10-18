@@ -65,6 +65,7 @@
     terms: 'Pago a 15 o 30 días según lo acordado. ¡Gracias por apoyar un emprendimiento!',
     waInvoice: D.WA_INVOICE,
     waReminder: D.WA_REMINDER,
+    waAuto: false, // envío automático por la API de WhatsApp (necesita la nube y la función de Firebase)
     theme: 'auto',
     palette: 'fresa',
     brand: '#d9366f',

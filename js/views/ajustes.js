@@ -75,6 +75,15 @@
       </div>
       <p class="form-note">La numeración es por prefijo. Si dos personas usan la app con los mismos datos, cada una debe tener su propio prefijo (por ejemplo «D-» y «R-») para que los números de factura no se repitan.</p>
 
+      <div class="form-title" data-rise>WhatsApp automático</div>
+      <div class="fields" data-rise>
+        <label class="field"><span>Enviar facturas y recordatorios solos</span><span class="field__sw"><span class="switch"><input type="checkbox" data-change="set.waauto" ${s.waAuto ? 'checked' : ''}><i></i></span></span></label>
+      </div>
+      <div class="list" style="margin-top:12px" data-rise>
+        <button class="row row--tap row--noavatar" data-act="wa.test"><span class="row__icon">${D.icon('whatsapp')}</span><span class="row__main"><span class="row__title">Probar conexión con WhatsApp</span><span class="row__sub">Comprueba el número y el token de Meta</span></span></button>
+      </div>
+      <p class="form-note">Al guardar una venta, la factura sale sola por WhatsApp (con su imagen) al cliente que tenga número guardado. Los recordatorios salen con un toque, sin abrir WhatsApp. Necesita la conexión con la nube y la configuración de Meta de LEEME.md.</p>
+
       <div class="form-title" data-rise>Mensajes de WhatsApp</div>
       <div class="fields" data-rise>${area('Al enviar una factura', 'waInvoice', 6, 'tpl')}${chips('waInvoice')}${area('Al recordar un cobro', 'waReminder', 6, 'tpl')}${chips('waReminder')}</div>
       <div class="row-flex" style="padding:10px 4px 0"><button class="btn btn--sm btn--plain" data-act="set.tpl.reset">${D.icon('sparkle')}Restaurar mensajes originales</button></div>
@@ -188,6 +197,25 @@
     ta.setSelectionRange(at + v.dataset.var.length + 2, at + v.dataset.var.length + 2);
     ta.dispatchEvent(new Event('change', { bubbles: true }));
   });
+  D.chg['set.waauto'] = (el) => {
+    if (el.checked && !(D.cloud && D.cloud.linked())) {
+      el.checked = false;
+      return D.toast('Primero conecta este dispositivo con la nube (Datos compartidos).', { tone: 'info', icon: 'cloud' });
+    }
+    S().waAuto = el.checked;
+    save();
+    D.toast(el.checked ? 'Envío automático activado' : 'Envío automático apagado', { icon: 'whatsapp' });
+  };
+  D.act['wa.test'] = async () => {
+    if (!(D.cloud && D.cloud.linked())) return D.alert('Falta la nube', 'Conecta este dispositivo con la nube en «Datos compartidos» y vuelve a probar.');
+    D.toast('Comprobando WhatsApp…', { tone: 'info', icon: 'whatsapp' });
+    try {
+      const r = await D.cloud.call('waSend', { kind: 'status' });
+      D.alert('WhatsApp conectado', `Número: ${r.number || '—'} · ${r.name || ''}${r.quality ? ' · calidad ' + r.quality : ''}. Ya puedes activar el envío automático.`);
+    } catch (e) {
+      D.alert('No se pudo conectar', e.userMessage || e.message);
+    }
+  };
   D.act['set.tpl.reset'] = () => {
     Object.assign(S(), { waInvoice: D.WA_INVOICE, waReminder: D.WA_REMINDER });
     D.store.commit('settings');

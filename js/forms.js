@@ -227,13 +227,16 @@
       sh.close('force');
       if (editing) D.toast('Venta actualizada');
       else D.sound && D.sound.sale();
-      if (!editing) setTimeout(() => F.saleDone(sale.id), D.reduceMotion() ? 0 : 260);
+      if (!editing) {
+        const auto = D.wa.autoInvoice(sale); // con el envío automático activo, la factura sale sola
+        setTimeout(() => F.saleDone(sale.id, auto), D.reduceMotion() ? 0 : 260);
+      }
     }
     return sh;
   };
 
   /* Confirmación tras registrar una venta */
-  F.saleDone = (id) => {
+  F.saleDone = (id, auto) => {
     const sale = D.sale.byId(id);
     if (!sale) return;
     const c = D.sale.customer(sale);
@@ -248,8 +251,9 @@
         <p>${esc(sale.number)} · ${esc(D.sale.customerName(sale))}</p>
         ${D.ui.statusChip(D.sale.status(sale))}
         ${bal > 0 ? `<p class="muted" style="font-size:.9rem">Saldo ${D.money(bal)} · ${esc(D.wa.dueText(sale))}</p>` : ''}
+        ${auto ? `<p class="muted" style="font-size:.9rem">${D.icon('whatsapp', 'i--inline')} La factura va saliendo por WhatsApp a ${esc(D.sale.customerName(sale))}</p>` : ''}
       </div>`,
-      footer: `<button class="btn btn--wa" data-done="wa">${D.icon('whatsapp')}Enviar por WhatsApp</button>
+      footer: `<button class="btn btn--wa" data-done="wa">${D.icon('whatsapp')}${auto ? 'Reenviar' : 'Enviar'} por WhatsApp</button>
         <div class="sheet__foot--row" style="display:grid;grid-auto-flow:column;gap:10px"><button class="btn btn--tint" data-done="inv">${D.icon('file')}Ver factura</button><button class="btn btn--tint" data-done="new">${D.icon('plus')}Otra venta</button></div>`,
     });
     sh.el.addEventListener('click', (e) => {
@@ -601,7 +605,7 @@
       if (kind === 'sale') {
         D.sound && D.sound.coin(v.amount >= bal - 0.005);
         const c = D.sale.customer(doc);
-        D.toast(`Abono de ${D.money(v.amount)} registrado`, { action: { label: 'Avisar', fn: () => D.wa.sendDoc(doc, c && c.phone, D.wa.paymentText(doc, v.amount)) } });
+        D.toast(`Abono de ${D.money(v.amount)} registrado`, { action: { label: 'Avisar', fn: () => D.wa.sendDoc(doc, c && c.phone, D.wa.paymentText(doc, v.amount), 'pago') } });
       } else D.toast(`Pago de ${D.money(v.amount)} registrado`);
     }
   };
@@ -623,7 +627,7 @@
     const s = D.sale.byId(el.dataset.id);
     if (!s) return;
     const c = D.sale.customer(s);
-    D.wa.sendDoc(s, c && c.phone, D.wa.reminderText([s], D.sale.customerName(s)));
+    D.wa.sendDoc(s, c && c.phone, D.wa.reminderText([s], D.sale.customerName(s)), 'recordatorio');
   };
 
   /* Eliminar con opción de deshacer */

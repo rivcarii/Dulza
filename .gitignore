@@ -9,3 +9,6 @@ entregables/
 __pycache__/
 .DS_Store
 Thumbs.db
+
+functions/node_modules/
+functions/.env*

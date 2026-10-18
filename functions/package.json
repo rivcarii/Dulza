@@ -1,0 +1,11 @@
+{
+  "name": "dulza-functions",
+  "private": true,
+  "description": "Envío automático de facturas por WhatsApp (API de WhatsApp Cloud)",
+  "engines": { "node": "20" },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}

@@ -103,6 +103,22 @@
     try { await init(); await auth.signOut(); } catch (e) {}
   }
 
+  /* ---------- Funciones de la nube (envío automático de WhatsApp) ---------- */
+  async function call(name, data) {
+    try {
+      await init();
+      if (!(await firstUser())) throw Object.assign(new Error('Entra con tu cuenta de la nube para enviar mensajes.'), { code: 'auth/no-session' });
+      if (!firebase.functions) await script(`https://www.gstatic.com/firebasejs/${VER}/firebase-functions-compat.js`);
+      const fn = firebase.app().functions('southamerica-east1').httpsCallable(name, { timeout: 60000 });
+      return (await fn(data)).data;
+    } catch (e) {
+      const known = { 'functions/not-found': 'El envío automático todavía no está activado en la nube.', 'functions/unauthenticated': 'Entra de nuevo con tu cuenta de la nube.', 'functions/internal': 'La nube tuvo un problema. Inténtalo otra vez.', 'functions/deadline-exceeded': 'WhatsApp tardó demasiado en responder.' }[e && e.code];
+      const x = wrap(e);
+      if (known && !x.network) { x.message = x.userMessage = known; }
+      throw x;
+    }
+  }
+
   /* ---------- Adaptador de Firestore para el motor de sincronización ---------- */
   const adapter = {
     name: 'firebase',
@@ -286,5 +302,5 @@
       <p class="form-note">Los clientes, postres, ventas, compras y proveedores se comparten con la otra persona y se guardan solos. El tema y el prefijo de factura son de cada dispositivo.</p>`;
   }
 
-  D.cloud = { configured: true, linked: () => !!read().linked, user: () => read().user || '', signIn, changePassword, signOut, start, boot, rows, chip, statusText, adapter, _wrap: wrap };
+  D.cloud = { configured: true, linked: () => !!read().linked, user: () => read().user || '', signIn, changePassword, signOut, call, start, boot, rows, chip, statusText, adapter, _wrap: wrap };
 })();

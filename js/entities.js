@@ -227,8 +227,7 @@
     const open = D.customer.sales(c.id).filter((s) => D.sale.balance(s) > 0).sort((a, b) => (a.due || '').localeCompare(b.due || ''));
     if (!open.length) return D.toast('No tiene saldos pendientes', { tone: 'info', icon: 'info' });
     // con una sola factura abierta se copia también su imagen; con varias va solo el texto con la lista
-    if (open.length === 1) D.wa.sendDoc(open[0], c.phone, D.wa.reminderText(open, c.name));
-    else D.wa.send(c.phone, D.wa.reminderText(open, c.name));
+    D.wa.sendReminder(open, c);
   };
   D.act['customer.del'] = async (el) => {
     const c = D.customer.byId(el.dataset.id);

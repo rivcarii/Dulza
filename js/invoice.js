@@ -111,12 +111,103 @@
   };
 
   /* Envío por WhatsApp con texto ordenado y la imagen de la factura ya copiada para pegarla en el chat */
-  wa.sendDoc = async (sale, phone, text) => {
+  wa.manualDoc = async (sale, phone, text) => {
+    // la ventana se abre en el mismo toque (si se espera a la imagen, el navegador la bloquea); después se le pone el chat
+    let win = null;
+    try { win = window.open('about:blank', '_blank'); } catch (e) {}
     const copied = await wa.copyImage(sale);
-    const opened = wa.send(phone, text, { quiet: true, note: copied ? ' La imagen ya está copiada: pégala en el chat.' : '' });
-    if (!opened) return; // el aviso de «Abrir WhatsApp» ya explica qué hacer
+    const link = D.waLink(phone, text);
+    if (win && !win.closed) {
+      try { win.opener = null; } catch (e) {}
+      win.location.href = link;
+    } else if (!D.openWa(phone, text)) {
+      D.toast(`El navegador frenó la ventana de WhatsApp.${copied ? ' La imagen ya está copiada: pégala en el chat.' : ''}`, { tone: 'info', icon: 'whatsapp', action: { label: 'Abrir WhatsApp', fn: () => D.openWa(phone, text) } });
+      return;
+    }
     const sinChat = phone ? '' : ' Elige también el contacto.';
     D.toast(copied ? `Imagen de la factura copiada: en WhatsApp mantén pulsado el mensaje y elige «Pegar».${sinChat}` : `No pude copiar la imagen: usa «Compartir imagen» para adjuntarla.${sinChat}`, { tone: copied ? 'ok' : 'info', icon: 'image' });
+  };
+
+  /* ---------- Envío automático (API oficial de WhatsApp, a través de la función de Firebase) ---------- */
+  wa.autoOn = () => !!(D.data.settings.waAuto && D.cloud && D.cloud.linked());
+  const one = (s) => String(s == null ? '' : s).replace(/[\r\n\t]+/g, ' ').replace(/ {2,}/g, ' ').trim() || '-';
+  const b64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+
+  wa.paramsFactura = (sale) => {
+    const bal = D.sale.balance(sale);
+    return [
+      D.sale.customerName(sale),
+      sale.number,
+      D.data.settings.name,
+      sale.items.map((i) => `${i.qty}× ${i.name}`).join(', '),
+      D.money(D.sale.total(sale)),
+      bal > 0 ? D.money(bal) : `${D.money(0)} (pagada)`,
+      bal <= 0 ? '✅ Factura pagada' : wa.dueLine(sale) || 'Pago de contado',
+    ].map(one);
+  };
+  wa.paramsRecordatorio = (sales, name) => {
+    const open = sales.filter((s) => D.sale.balance(s) > 0);
+    const total = open.reduce((a, s) => a + D.sale.balance(s), 0);
+    return [
+      name,
+      D.data.settings.name,
+      D.money(D.r2(total)),
+      open.map((s) => `${s.number}: ${D.money(D.sale.balance(s))}`).join(' · '),
+      open.length === 1 ? wa.dueLine(open[0]) || 'Avísanos cuando hagas el pago.' : 'Avísanos cuando hagas el pago.',
+    ].map(one);
+  };
+
+  /* Devuelve true si se envió; si falla, avisa con el motivo y ofrece mandarlo a mano (`manual`) */
+  wa.autoSend = async (kind, phone, params, sale, who, manual) => {
+    const to = D.waNumber(phone);
+    if (!to) {
+      D.toast(`${who || 'Este cliente'} no tiene WhatsApp guardado: agrégalo en su ficha.`, { tone: 'info', icon: 'info' });
+      return false;
+    }
+    D.toast('Enviando por WhatsApp…', { tone: 'info', icon: 'whatsapp' });
+    try {
+      const data = { kind, to, params };
+      if (kind === 'factura') data.image = await b64(await D.invoice.blob(sale, 'jpg'));
+      await D.cloud.call('waSend', data);
+    } catch (e) {
+      D.toast(e.userMessage || e.message || 'No se pudo enviar.', { tone: 'bad', icon: 'whatsapp', action: manual ? { label: 'Enviar a mano', fn: manual } : undefined });
+      return false;
+    }
+    if (kind === 'factura' && sale) {
+      sale.waSentAt = Date.now();
+      D.store.commit('sales');
+    }
+    D.haptic && D.haptic(14);
+    D.toast(`${kind === 'factura' ? 'Factura enviada' : 'Recordatorio enviado'} a ${who || 'tu cliente'} por WhatsApp`, { icon: 'checkCircle' });
+    return true;
+  };
+
+  /* kind: 'factura' | 'recordatorio' | 'pago'. Con el envío automático activo, factura y recordatorio salen solos. */
+  wa.sendDoc = async (sale, phone, text, kind = 'factura') => {
+    const manual = () => wa.manualDoc(sale, phone, text);
+    if (wa.autoOn() && phone && kind !== 'pago') {
+      const name = D.sale.customerName(sale);
+      const params = kind === 'factura' ? wa.paramsFactura(sale) : wa.paramsRecordatorio([sale], name);
+      if (await wa.autoSend(kind, phone, params, sale, name, manual)) return;
+      return;
+    }
+    return manual();
+  };
+  wa.sendReminder = (sales, customer) => {
+    const open = sales.filter((s) => D.sale.balance(s) > 0);
+    const text = wa.reminderText(open, customer.name);
+    if (open.length === 1) return wa.sendDoc(open[0], customer.phone, text, 'recordatorio');
+    const manual = () => wa.send(customer.phone, text);
+    if (wa.autoOn() && customer.phone) return wa.autoSend('recordatorio', customer.phone, wa.paramsRecordatorio(open, customer.name), null, customer.name, manual);
+    return manual();
+  };
+  /* Al guardar una venta: sale sola si el envío automático está activo y el cliente tiene WhatsApp */
+  wa.autoInvoice = (sale) => {
+    if (!wa.autoOn()) return false;
+    const c = D.sale.customer(sale);
+    if (!c || !c.phone) return false;
+    wa.sendDoc(sale, c.phone, wa.invoiceText(sale), 'factura');
+    return true;
   };
 
   /* ==========================================================================
@@ -488,8 +579,9 @@
     },
 
     async blob(sale, type = 'png') {
-      const c = await D.invoice.render(sale, 2);
+      const c = await D.invoice.render(sale, type === 'jpg' ? 1.5 : 2);
       if (type === 'png') return new Promise((r) => c.toBlob(r, 'image/png'));
+      if (type === 'jpg') return new Promise((r) => c.toBlob(r, 'image/jpeg', 0.9)); // más liviano para enviar por la nube
       const jpg = await new Promise((r) => c.toBlob(r, 'image/jpeg', 0.92));
       const bytes = new Uint8Array(await jpg.arrayBuffer());
       return new Blob([pdfFromJpeg(bytes, c.width, c.height)], { type: 'application/pdf' });

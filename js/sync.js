@@ -19,7 +19,7 @@
   const COLS = ['customers', 'products', 'sales', 'suppliers', 'purchases'];
   const ALL = ['settings'].concat(COLS);
   // Ajustes compartidos del negocio. El prefijo de factura NO se comparte: cada persona usa el suyo.
-  const SHARED = ['name', 'owner', 'tagline', 'phone', 'address', 'country', 'dial', 'currency', 'decimals', 'numFmt', 'defaultTerm', 'terms', 'waInvoice', 'waReminder', 'brand', 'accent', 'palette'];
+  const SHARED = ['name', 'owner', 'tagline', 'phone', 'address', 'country', 'dial', 'currency', 'decimals', 'numFmt', 'defaultTerm', 'terms', 'waInvoice', 'waReminder', 'waAuto', 'brand', 'accent', 'palette'];
   const META = 'dulza-sync';
   const TOMB_MS = 60 * 864e5; // las lápidas se conservan 60 días
 
