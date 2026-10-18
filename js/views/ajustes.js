@@ -36,7 +36,7 @@
   /* ---------- Ajustes ---------- */
   const field = (label, key, extra = '') => `<label class="field"><span>${label}</span><input data-change="set" data-key="${key}" value="${esc(S()[key])}" ${extra}></label>`;
   const area = (label, key, rows = 3, cls = '') => `<label class="field field--area"><span>${label}</span><textarea class="${cls}" data-change="set" data-key="${key}" rows="${rows}">${esc(S()[key])}</textarea></label>`;
-  const chips = (key) => `<div class="var-chips">${['cliente', 'numero', 'negocio', 'detalle', 'total', 'saldo', 'vence', 'estado'].map((v) => `<button type="button" data-var="${v}" data-for="${key}">{${v}}</button>`).join('')}</div>`;
+  const chips = (key) => `<div class="var-chips">${['cliente', 'numero', 'fecha', 'negocio', 'detalle', 'resumen', 'total', 'saldo', 'vence', 'plazo'].map((v) => `<button type="button" data-var="${v}" data-for="${key}">{${v}}</button>`).join('')}</div>`;
 
   function render() {
     const s = S();
@@ -179,13 +179,22 @@
     S()[el.dataset.key] = el.value; // vista previa en vivo mientras se arrastra el selector
     D.theme.apply();
   });
+  document.addEventListener('focusout', (e) => {
+    const ta = e.target;
+    if (ta && ta.matches && ta.matches('textarea.tpl')) {
+      ta.dataset.at = ta.selectionStart;
+      ta.dataset.to = ta.selectionEnd;
+    }
+  });
   document.addEventListener('click', (e) => {
     const v = e.target.closest('[data-var]');
     if (!v) return;
     const ta = $(`[data-key="${v.dataset.for}"]`);
     if (!ta) return;
-    const at = ta.selectionStart ?? ta.value.length;
-    ta.value = ta.value.slice(0, at) + `{${v.dataset.var}}` + ta.value.slice(ta.selectionEnd ?? at);
+    // se inserta donde estaba el cursor al salir del cuadro; si nunca se tocó, al final (antes iba al principio y desordenaba el mensaje)
+    const at = ta.dataset.at != null ? +ta.dataset.at : ta.value.length;
+    const to = ta.dataset.to != null ? +ta.dataset.to : at;
+    ta.value = ta.value.slice(0, at) + `{${v.dataset.var}}` + ta.value.slice(to);
     ta.focus();
     ta.setSelectionRange(at + v.dataset.var.length + 2, at + v.dataset.var.length + 2);
     ta.dispatchEvent(new Event('change', { bubbles: true }));

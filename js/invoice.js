@@ -21,20 +21,45 @@
     return `Vence el ${D.fmtDate(sale.due)}.`;
   };
 
+  /* Línea de fecha límite con emoji: «📅 Vence el 29 oct (en 12 días)» o «⚠️ Venció el … (hace 3 días)» */
+  wa.dueLine = (sale) => {
+    if (D.sale.balance(sale) <= 0 || !sale.due) return '';
+    const n = D.diffDays(sale.due, D.today());
+    if (n < 0) return `⚠️ Venció el ${D.fmtDate(sale.due)} (${D.relDay(sale.due)})`;
+    if (n === 0) return '📅 Vence hoy';
+    return `📅 Vence el ${D.fmtDate(sale.due)} (${D.relDay(sale.due)})`;
+  };
+
+  /* Totales en pocas líneas: total, lo abonado y el saldo (o «Pagada») */
+  wa.summary = (sale) => {
+    const total = D.sale.total(sale), paid = D.sale.paid(sale), bal = D.sale.balance(sale);
+    const L = [];
+    if (sale.discount > 0) L.push(`Subtotal: ${D.money(D.sale.subtotal(sale))}`, `Descuento: −${D.money(sale.discount)}`);
+    L.push(`*Total: ${D.money(total)}*`);
+    if (paid > 0 && bal > 0) L.push(`Abonado: ${D.money(paid)}`);
+    L.push(bal > 0 ? `*Saldo pendiente: ${D.money(bal)}*` : '✅ *Pagada, ¡gracias!*');
+    return L.join('\n');
+  };
+
   wa.invoiceText = (sale) => {
     const S = D.data.settings;
     const bal = D.sale.balance(sale);
-    const estado = bal <= 0 ? '✅ Pagada, ¡gracias!' : `Saldo pendiente: *${D.money(bal)}*${sale.due ? ` · ${wa.dueText(sale)}` : ''}`;
     return D.fill(S.waInvoice || D.WA_INVOICE, {
       cliente: D.sale.customerName(sale),
       numero: sale.number,
       negocio: S.name,
+      fecha: fdate(sale.date),
       detalle: wa.lines(sale),
+      resumen: wa.summary(sale),
       total: D.money(D.sale.total(sale)),
       saldo: D.money(bal),
-      vence: wa.dueText(sale),
-      estado,
-    });
+      plazo: sale.term ? `${sale.term} días` : 'Contado',
+      vence: wa.dueLine(sale),
+      condiciones: S.terms || '',
+      estado: bal <= 0 ? '✅ Pagada, ¡gracias!' : `Saldo pendiente: *${D.money(bal)}*${sale.due ? ` · ${wa.dueText(sale)}` : ''}`,
+    })
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   };
 
   /* Recordatorio de cobro de una o varias ventas del mismo cliente */
@@ -42,17 +67,20 @@
     const S = D.data.settings;
     const open = sales.filter((s) => D.sale.balance(s) > 0);
     const total = open.reduce((a, s) => a + D.sale.balance(s), 0);
-    const detalle =
-      open.length === 1
-        ? `factura ${open[0].number} del ${D.fmtDate(open[0].date)}`
-        : '\n' + open.map((s) => `• ${s.number} · ${D.fmtDate(s.date)} · ${D.money(D.sale.balance(s))}${s.due ? ` (${D.sale.balance(s) > 0 && s.due < D.today() ? 'venció' : 'vence'} ${D.relDay(s.due)})` : ''}`).join('\n');
+    const one = open.length === 1;
+    // una viñeta por factura; con varias, cada una dice cuándo vence (con una sola, la fecha va en su propia línea)
+    const detalle = open
+      .map((s) => `• Factura *${s.number}* del ${D.fmtDate(s.date)} — saldo *${D.money(D.sale.balance(s))}*${!one && s.due ? ` (${s.due < D.today() ? 'venció' : 'vence'} ${D.relDay(s.due)})` : ''}`)
+      .join('\n');
     return D.fill(S.waReminder || D.WA_REMINDER, {
       cliente: customerName,
       negocio: S.name,
       saldo: D.money(D.r2(total)),
       detalle,
-      vence: open.length === 1 ? wa.dueText(open[0]) : '',
-    }).replace(/\n{3,}/g, '\n\n');
+      vence: one ? wa.dueLine(open[0]) : '',
+    })
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   };
 
   wa.paymentText = (sale, amount) => {
@@ -61,9 +89,34 @@
     return `Hola ${D.sale.customerName(sale)} 🧁\nRecibí tu pago de *${D.money(amount)}* para la factura *${sale.number}*. ¡Gracias! 💖\n${bal > 0 ? `Saldo pendiente: *${D.money(bal)}*${sale.due ? ` · ${wa.dueText(sale)}` : ''}` : '✅ Tu factura quedó *pagada*.'}\n— ${S.name}`;
   };
 
-  wa.send = (phone, text) => {
-    if (!phone) D.toast('Este cliente no tiene WhatsApp guardado: elige el contacto en WhatsApp', { tone: 'info', icon: 'info' });
-    D.openWa(phone, text);
+  /* Abre el chat con el texto listo. Devuelve false si el navegador bloqueó la ventana (pasa en iPhone después de preparar la
+     imagen): entonces un toque más en «Abrir WhatsApp» la abre. */
+  wa.send = (phone, text, o = {}) => {
+    if (!phone && !o.quiet) D.toast('Este cliente no tiene WhatsApp guardado: elige el contacto en WhatsApp', { tone: 'info', icon: 'info' });
+    const ok = D.openWa(phone, text);
+    if (!ok) D.toast(`El navegador frenó la ventana de WhatsApp.${o.note || ''}`, { tone: 'info', icon: 'whatsapp', action: { label: 'Abrir WhatsApp', fn: () => D.openWa(phone, text) } });
+    return ok;
+  };
+
+  /* Copia la imagen de la factura al portapapeles. WhatsApp (enlace wa.me) solo admite texto, así que la imagen se pega en el chat.
+     El PNG se entrega como promesa para que Safari lo acepte dentro del toque; debe llamarse sin esperar nada antes. */
+  wa.copyImage = async (sale) => {
+    if (!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem)) return false;
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': D.invoice.blob(sale, 'png') })]);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  /* Envío por WhatsApp con texto ordenado y la imagen de la factura ya copiada para pegarla en el chat */
+  wa.sendDoc = async (sale, phone, text) => {
+    const copied = await wa.copyImage(sale);
+    const opened = wa.send(phone, text, { quiet: true, note: copied ? ' La imagen ya está copiada: pégala en el chat.' : '' });
+    if (!opened) return; // el aviso de «Abrir WhatsApp» ya explica qué hacer
+    const sinChat = phone ? '' : ' Elige también el contacto.';
+    D.toast(copied ? `Imagen de la factura copiada: en WhatsApp mantén pulsado el mensaje y elige «Pegar».${sinChat}` : `No pude copiar la imagen: usa «Compartir imagen» para adjuntarla.${sinChat}`, { tone: copied ? 'ok' : 'info', icon: 'image' });
   };
 
   /* ==========================================================================
@@ -500,7 +553,7 @@
             <button class="row row--tap row--noavatar" data-inv="dl-png"><span class="row__icon">${D.icon('download')}</span><span class="row__main"><span class="row__title">Descargar imagen</span></span></button>
           </div>`,
         footer: `<button class="btn btn--wa" data-inv="wa">${D.icon('whatsapp')}Enviar por WhatsApp${customer ? ' a ' + esc(customer.name.split(' ')[0]) : ''}</button>
-                 <p class="muted center" style="font-size:.8rem">Abre el chat con el detalle de la factura. Para adjuntarla, usa «Compartir PDF» o «imagen».</p>`,
+                 <p class="muted center" style="font-size:.8rem">Abre el chat con el detalle ordenado y copia la imagen de la factura: en WhatsApp mantén pulsado y elige «Pegar». O usa «Compartir imagen» para adjuntarla directo.</p>`,
         onClose: () => url && URL.revokeObjectURL(url),
       });
       D.invoice.render(sale, 2).then((c) =>
@@ -516,7 +569,7 @@
         const b = e.target.closest('[data-inv]');
         if (!b) return;
         const k = b.dataset.inv;
-        if (k === 'wa') wa.send(customer && customer.phone, wa.invoiceText(sale));
+        if (k === 'wa') wa.sendDoc(sale, customer && customer.phone, wa.invoiceText(sale));
         else {
           const type = k.endsWith('pdf') ? 'pdf' : 'png';
           b.style.opacity = '0.5';

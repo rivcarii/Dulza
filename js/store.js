@@ -36,10 +36,17 @@
     { n: 'Estados Unidos', d: '1', c: '$', dec: 2, f: 'comma' },
   ];
 
+  // Mensajes de WhatsApp: *negrita*, viñetas y una línea por dato para que se lean de un vistazo.
+  // {detalle} = una viñeta por postre, {resumen} = total, abonos y saldo, {vence} = fecha límite con aviso si ya venció.
   D.WA_INVOICE =
-    'Hola {cliente} 🧁\nTe comparto tu factura *{numero}* de *{negocio}*:\n\n{detalle}\n\n*Total:* {total}\n{estado}\n\n¡Gracias por tu compra! 💖';
+    '🧁 *{negocio}*\nFactura *{numero}* · {fecha}\n\nHola {cliente} 👋 Este es el detalle de tu pedido:\n\n{detalle}\n\n{resumen}\n{vence}\n\n¡Gracias por tu compra! 💖';
   D.WA_REMINDER =
-    'Hola {cliente} 🧁\nTe escribo de *{negocio}* para recordarte con cariño que tienes un saldo pendiente de *{saldo}* ({detalle}).\n{vence}\n\nPuedes pagarme por el medio que prefieras y me avisas por aquí. ¡Gracias! 💖';
+    'Hola {cliente} 🧁\nTe escribo de *{negocio}* para recordarte con cariño que tienes un saldo pendiente:\n\n{detalle}\n\n*Total por pagar: {saldo}*\n{vence}\n\nPuedes pagar por el medio que prefieras y me avisas por aquí. ¡Gracias! 💖';
+  // Textos de fábrica anteriores: si el dispositivo todavía los tiene (no se personalizaron) se cambian por los nuevos
+  D.WA_OLD = {
+    waInvoice: ['Hola {cliente} 🧁\nTe comparto tu factura *{numero}* de *{negocio}*:\n\n{detalle}\n\n*Total:* {total}\n{estado}\n\n¡Gracias por tu compra! 💖'],
+    waReminder: ['Hola {cliente} 🧁\nTe escribo de *{negocio}* para recordarte con cariño que tienes un saldo pendiente de *{saldo}* ({detalle}).\n{vence}\n\nPuedes pagarme por el medio que prefieras y me avisas por aquí. ¡Gracias! 💖'],
+  };
 
   D.defaults = {
     name: 'Dulza',
@@ -121,7 +128,10 @@
   function hydrate(saved) {
     KEYS.forEach((k) => {
       if (saved[k] == null) return;
-      if (k === 'settings') D.data.settings = { ...D.defaults, ...saved[k] };
+      if (k === 'settings') {
+        D.data.settings = { ...D.defaults, ...saved[k] };
+        Object.keys(D.WA_OLD).forEach((f) => { if (D.WA_OLD[f].includes(D.data.settings[f])) D.data.settings[f] = D.defaults[f]; });
+      }
       else if (Array.isArray(saved[k])) D.data[k] = saved[k];
     });
   }

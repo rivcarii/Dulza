@@ -129,7 +129,8 @@ assets/brand/         Versión vectorial anterior (logos y personaje en SVG/PNG)
 ## Notas importantes
 
 - La factura es un **comprobante comercial**, no una factura electrónica válida ante la autoridad tributaria de tu país.
-- «Enviar por WhatsApp» abre el chat del cliente con el mensaje listo (WhatsApp no permite adjuntar archivos automáticamente). Para enviar el PDF o la imagen, usa «Compartir PDF/imagen» y elige WhatsApp.
+- **WhatsApp:** «Enviar por WhatsApp» (al registrar una venta, en la factura, en «Avisar» de un abono y en los recordatorios de cobro) abre el chat del cliente con el mensaje ordenado —viñetas por postre, total, abonado, saldo y fecha límite— y **copia la imagen de la factura** al portapapeles: en WhatsApp se mantiene pulsado el cuadro de texto y se elige «Pegar». WhatsApp no permite adjuntar archivos desde un enlace, por eso la imagen se pega a mano; con «Compartir imagen» o «Compartir PDF» se adjunta directo (el texto va de pie de foto). Si el navegador bloquea la ventana, aparece un botón «Abrir WhatsApp». Con varias facturas pendientes, el recordatorio lista todas y no copia imagen.
+- Los textos se editan en Ajustes → Mensajes de WhatsApp (variables: `{cliente}`, `{numero}`, `{fecha}`, `{negocio}`, `{detalle}`, `{resumen}`, `{total}`, `{saldo}`, `{vence}`, `{plazo}`). Los textos de fábrica anteriores se actualizan solos; los personalizados no se tocan (hay «Restaurar mensajes originales»).
 - Atajos de teclado en computadora: `N` nueva venta · `Shift+N` nueva compra · `/` buscar.
 
 ## Marca: logo, personaje y portafolio

@@ -255,7 +255,7 @@
       const b = e.target.closest('[data-done]');
       if (!b) return;
       const k = b.dataset.done;
-      if (k === 'wa') D.wa.send(c && c.phone, D.wa.invoiceText(sale));
+      if (k === 'wa') D.wa.sendDoc(sale, c && c.phone, D.wa.invoiceText(sale));
       else if (k === 'inv') D.invoice.open(id);
       else if (k === 'new') {
         sh.close('nav', true);
@@ -599,7 +599,7 @@
       sh.close('force');
       if (kind === 'sale') {
         const c = D.sale.customer(doc);
-        D.toast(`Abono de ${D.money(v.amount)} registrado`, { action: { label: 'Avisar', fn: () => D.wa.send(c && c.phone, D.wa.paymentText(doc, v.amount)) } });
+        D.toast(`Abono de ${D.money(v.amount)} registrado`, { action: { label: 'Avisar', fn: () => D.wa.sendDoc(doc, c && c.phone, D.wa.paymentText(doc, v.amount)) } });
       } else D.toast(`Pago de ${D.money(v.amount)} registrado`);
     }
   };
@@ -615,13 +615,13 @@
   D.act['sale.wa'] = (el) => {
     const s = D.sale.byId(el.dataset.id);
     const c = s && D.sale.customer(s);
-    s && D.wa.send(c && c.phone, D.wa.invoiceText(s));
+    s && D.wa.sendDoc(s, c && c.phone, D.wa.invoiceText(s));
   };
   D.act['sale.remind'] = (el) => {
     const s = D.sale.byId(el.dataset.id);
     if (!s) return;
     const c = D.sale.customer(s);
-    D.wa.send(c && c.phone, D.wa.reminderText([s], D.sale.customerName(s)));
+    D.wa.sendDoc(s, c && c.phone, D.wa.reminderText([s], D.sale.customerName(s)));
   };
 
   /* Eliminar con opción de deshacer */

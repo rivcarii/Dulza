@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const D = (window.D = window.D || {});
-  D.version = '1.9.0'; // se sube junto con VERSION de sw.js (python .dev/version.py 1.7.0)
+  D.version = '1.10.0'; // se sube junto con VERSION de sw.js (python .dev/version.py 1.7.0)
 
   /* ---------- DOM ---------- */
   D.$ = (s, r = document) => r.querySelector(s);
@@ -214,8 +214,12 @@
     const n = D.waNumber(phone);
     return `https://wa.me/${n}?text=${encodeURIComponent(text || '')}`;
   };
+  // Devuelve false si el navegador bloqueó la ventana (sin «noopener» en la llamada, porque con él siempre devuelve null)
   D.openWa = (phone, text) => {
-    window.open(D.waLink(phone, text), '_blank', 'noopener');
+    const w = window.open(D.waLink(phone, text), '_blank');
+    if (!w) return false;
+    try { w.opener = null; } catch (e) {}
+    return true;
   };
   D.fill = (tpl, vars) => String(tpl).replace(/\{(\w+)\}/g, (m, k) => (vars[k] != null ? vars[k] : m));
 
