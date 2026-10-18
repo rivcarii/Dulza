@@ -156,7 +156,7 @@
       typing && typing.remove();
       box.insertAdjacentHTML('beforeend', html);
       const last = box.lastElementChild;
-      if (last && !D.reduceMotion()) last.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
+      if (last && !D.reduceMotion()) last.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 340, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
       sh.body.scrollTo({ top: sh.body.scrollHeight, behavior: D.reduceMotion() ? 'auto' : 'smooth' });
     };
     if (!delay || D.reduceMotion()) return add();

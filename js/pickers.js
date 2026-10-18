@@ -54,7 +54,7 @@
   function openDate(inp) {
     const today = D.today();
     const start = inp.value || today;
-    let y = +start.slice(0, 4), m = +start.slice(5, 7) - 1;
+    let y = +start.slice(0, 4), m = +start.slice(5, 7) - 1, mode = 'days';
     const min = inp.min || '', max = inp.max || '';
     const sh = D.sheet.open({ title: labelOf(inp), trackDirty: false, body: '<div class="cal"></div>', footer: '' });
     const pick = (v) => {
@@ -63,39 +63,83 @@
       D.haptic && D.haptic(6);
       sh.close();
     };
-    function draw() {
-      const first = new Date(y, m, 1);
-      const off = (first.getDay() + 6) % 7; // semana desde el lunes
-      const days = new Date(y, m + 1, 0).getDate();
-      let cells = '';
-      for (let i = 0; i < off; i++) cells += '<i class="cal__e"></i>';
-      for (let d = 1; d <= days; d++) {
-        const v = iso(y, m, d);
-        const dis = (min && v < min) || (max && v > max);
-        cells += `<button type="button" class="cal__d${v === inp.value ? ' is-sel' : ''}${v === today ? ' is-today' : ''}" data-v="${v}" ${dis ? 'disabled' : ''} aria-label="${d} de ${D.MONTHS_L[m]} de ${y}" ${v === inp.value ? 'aria-pressed="true"' : ''}>${d}</button>`;
+    const cap = (t) => t[0].toUpperCase() + t.slice(1);
+    // animación suave al cambiar de mes o de vista (solo opacidad y un pequeño desplazamiento)
+    const flash = (dir) => {
+      const el = sh.$('.cal__body');
+      if (!el || D.reduceMotion()) return;
+      el.animate([{ opacity: 0, transform: `translateX(${dir * 18}px)` }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
+    };
+    function draw(dir = 0) {
+      let inner = '';
+      if (mode === 'months') {
+        inner = `<div class="cal__months">${D.MONTHS_L.map((n, i) => `<button type="button" class="cal__m${i === m ? ' is-sel' : ''}" data-m="${i}">${cap(n)}</button>`).join('')}</div>`;
+      } else {
+        const first = new Date(y, m, 1);
+        const off = (first.getDay() + 6) % 7; // semana desde el lunes
+        const days = new Date(y, m + 1, 0).getDate();
+        let cells = '';
+        for (let i = 0; i < off; i++) cells += '<i class="cal__e"></i>';
+        for (let d = 1; d <= days; d++) {
+          const v = iso(y, m, d);
+          const dis = (min && v < min) || (max && v > max);
+          cells += `<button type="button" class="cal__d${v === inp.value ? ' is-sel' : ''}${v === today ? ' is-today' : ''}" data-v="${v}" ${dis ? 'disabled' : ''} aria-label="${d} de ${D.MONTHS_L[m]} de ${y}" ${v === inp.value ? 'aria-pressed="true"' : ''}>${d}</button>`;
+        }
+        inner = `<div class="cal__wk" aria-hidden="true">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((x) => `<span>${x}</span>`).join('')}</div><div class="cal__grid">${cells}</div>`;
       }
+      const title = mode === 'months' ? String(y) : `${cap(D.MONTHS_L[m])} ${y}`;
+      const step = mode === 'months' ? 12 : 1;
       sh.setBody(`<div class="cal">
-        <div class="cal__nav"><button type="button" class="icon-btn icon-btn--sm" data-go="-12" aria-label="Año anterior">«</button><button type="button" class="icon-btn icon-btn--sm" data-go="-1" aria-label="Mes anterior">${D.icon('chevR', 'cal__prev')}</button>
-          <b class="cal__title" aria-live="polite">${D.MONTHS_L[m][0].toUpperCase() + D.MONTHS_L[m].slice(1)} ${y}</b>
-          <button type="button" class="icon-btn icon-btn--sm" data-go="1" aria-label="Mes siguiente">${D.icon('chevR')}</button><button type="button" class="icon-btn icon-btn--sm" data-go="12" aria-label="Año siguiente">»</button></div>
-        <div class="cal__wk" aria-hidden="true">${['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((x) => `<span>${x}</span>`).join('')}</div>
-        <div class="cal__grid">${cells}</div>
+        <div class="cal__nav"><button type="button" class="icon-btn icon-btn--sm" data-step="${-12}" aria-label="Año anterior">«</button><button type="button" class="icon-btn icon-btn--sm" data-step="${-step}" aria-label="${mode === 'months' ? 'Año anterior' : 'Mes anterior'}">${D.icon('chevR', 'cal__prev')}</button>
+          <button type="button" class="cal__title" data-mode aria-label="Elegir mes y año" aria-live="polite">${title}<span class="cal__caret">${D.icon('chevD')}</span></button>
+          <button type="button" class="icon-btn icon-btn--sm" data-step="${step}" aria-label="${mode === 'months' ? 'Año siguiente' : 'Mes siguiente'}">${D.icon('chevR')}</button><button type="button" class="icon-btn icon-btn--sm" data-step="12" aria-label="Año siguiente">»</button></div>
+        <div class="cal__body">${inner}</div>
         <div class="cal__foot"><button type="button" class="btn btn--tint btn--sm" data-today>Hoy</button>${!inp.required && inp.value ? '<button type="button" class="btn btn--plain btn--sm" data-clear>Borrar fecha</button>' : ''}</div></div>`);
+      dir && flash(dir);
     }
     draw();
     sh.el.addEventListener('click', (e) => {
-      const g = e.target.closest('[data-go]');
+      const g = e.target.closest('[data-step]');
       if (g) {
-        const t = m + +g.dataset.go;
+        const n = +g.dataset.step;
+        const t = m + n;
         y += Math.floor(t / 12);
         m = ((t % 12) + 12) % 12;
-        draw();
+        if (mode === 'months') m = m; // en la vista de meses solo cambia el año
+        draw(n > 0 ? 1 : -1);
+        return;
+      }
+      if (e.target.closest('[data-mode]')) {
+        mode = mode === 'days' ? 'months' : 'days';
+        draw(0);
+        const el = sh.$('.cal__body');
+        el && !D.reduceMotion() && el.animate([{ opacity: 0, transform: 'scale(0.97)' }, { opacity: 1, transform: 'none' }], { duration: 300, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' });
+        return;
+      }
+      const mm = e.target.closest('.cal__m');
+      if (mm) {
+        m = +mm.dataset.m;
+        mode = 'days';
+        draw(1);
         return;
       }
       const d = e.target.closest('.cal__d');
       if (d && !d.disabled) return pick(d.dataset.v);
       if (e.target.closest('[data-today]')) return pick(today);
       if (e.target.closest('[data-clear]')) return pick('');
+    });
+    // deslizar el dedo sobre el calendario cambia de mes
+    let x0 = null;
+    sh.el.addEventListener('pointerdown', (e) => { x0 = e.target.closest('.cal__body') && mode === 'days' ? e.clientX : null; });
+    sh.el.addEventListener('pointerup', (e) => {
+      if (x0 == null) return;
+      const dx = e.clientX - x0;
+      x0 = null;
+      if (Math.abs(dx) < 60) return;
+      const t = m + (dx < 0 ? 1 : -1);
+      y += Math.floor(t / 12);
+      m = ((t % 12) + 12) % 12;
+      draw(dx < 0 ? 1 : -1);
     });
   }
 

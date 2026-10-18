@@ -87,26 +87,22 @@
     io.observe(title);
   }
 
-  /* Cambiar de pestaña se hace decenas de veces al día: solo un fundido corto. La entrada escalonada (con un poco de
-     movimiento) se reserva para la primera pantalla de la sesión. */
-  let firstPaint = true;
+  /* Entrada de cada pantalla: la página sube y se aclara con suavidad y sus bloques entran escalonados */
   function animateIn(root) {
     const page = $('.page', root);
     if (!page) return;
     const reduce = D.reduceMotion();
-    const intro = firstPaint;
-    firstPaint = false;
     page.animate(
-      reduce || !intro ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
-      { duration: reduce || !intro ? 160 : 260, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }
+      reduce ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }],
+      { duration: reduce ? 200 : 460, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }
     );
-    if (!reduce && intro)
+    if (!reduce)
       $$('[data-rise]', root)
-        .slice(0, 8)
+        .slice(0, 10)
         .forEach((el, i) =>
-          el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], {
-            duration: 260,
-            delay: 30 + i * 35,
+          el.animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], {
+            duration: 560,
+            delay: 60 + i * 60,
             easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
             fill: 'backwards',
           })

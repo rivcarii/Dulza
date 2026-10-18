@@ -644,32 +644,28 @@ dialog.lock.is-out { opacity: 0; transition: opacity 220ms var(--ease-out); }
 .grec__bad b { color: var(--bad-ink, #b3091f); }
 .grec__ok b { color: #178a55; }
 /* ==========================================================================
-   Ajuste de animaciones (criterios de las habilidades de animación)
-   - Solo transform y opacity; entradas con ease-out; salidas más rápidas que las entradas.
-   - Lo que se usa decenas de veces al día (pestañas, selectores, interruptores) es corto y sin rebote.
-   - Nada parte de scale(0); lo hecho con el teclado no se anima.
+   Animaciones: ritmo pausado y suave (solo transform y opacity, entradas con ease-out, salidas algo más rápidas)
    ========================================================================== */
-.switch i::after { transition: transform 220ms var(--ease-out); }
-.seg::before { transition: transform 260ms var(--ease-in-out); }
-.ready .tabbar__ind { transition: transform 280ms var(--ease-in-out); }
-.tab img.i--candy, .nav-item img.i--candy { transition: transform 180ms var(--ease-out), filter 160ms; }
-.swatch__dot { transition: transform 200ms var(--ease-out), box-shadow 160ms; }
-.swatch__dot .i { transition: opacity 140ms, transform 200ms var(--ease-out); }
-
-/* Hojas: entran en 400 ms y salen en 260 ms; la cortina, un poco más rápida */
-.sheet__scrim { transition-duration: 260ms; }
-.sheet__panel { transition-duration: 400ms; }
-.sheet.is-closing .sheet__panel { transition-duration: 260ms; }
-.sheet.is-closing .sheet__scrim { transition-duration: 200ms; }
+.switch i::after { transition: transform 320ms var(--ease-out); }
+.seg::before { transition: transform 380ms var(--ease-in-out); }
+.ready .tabbar__ind { transition: transform 420ms var(--ease-in-out); }
+.tab img.i--candy, .nav-item img.i--candy { transition: transform 260ms var(--ease-out), filter 200ms; }
+.swatch__dot { transition: transform 260ms var(--ease-out), box-shadow 200ms; }
+.swatch__dot .i { transition: opacity 180ms, transform 260ms var(--ease-out); }
+.sheet__scrim { transition-duration: 380ms; }
+.sheet__panel { transition-duration: 540ms; }
+.sheet.is-closing .sheet__panel { transition-duration: 380ms; }
+.sheet.is-closing .sheet__scrim { transition-duration: 280ms; }
 @media (min-width: 700px) {
-  .sheet__panel { transition: transform 320ms var(--ease-out), opacity 200ms var(--ease-out); }
-  .sheet.is-closing .sheet__panel { transition-duration: 200ms, 160ms; }
+  .sheet__panel { transition: transform 460ms var(--ease-out), opacity 300ms var(--ease-out); }
+  .sheet.is-closing .sheet__panel { transition-duration: 300ms, 220ms; }
 }
-/* Avisos y alertas: salida más rápida que la entrada */
-.toast { transition: transform 300ms var(--ease-out), opacity 200ms var(--ease-out); }
-.toast:not(.is-in) { transition-duration: 200ms, 140ms; }
-.alert:not(.is-open) .alert__card { transition-duration: 160ms, 120ms; }
-.alert:not(.is-open) .alert__scrim { transition-duration: 160ms; }
+.toast { transition: transform 440ms var(--ease-out), opacity 320ms var(--ease-out); }
+.toast:not(.is-in) { transition-duration: 300ms, 220ms; }
+.alert__card { transition: transform 420ms var(--ease-out), opacity 300ms var(--ease-out); }
+.alert:not(.is-open) .alert__card { transition-duration: 260ms, 200ms; }
+.alert__scrim { transition-duration: 320ms; }
+.alert:not(.is-open) .alert__scrim { transition-duration: 240ms; }
 /* Lo que se abre con el teclado (N, Shift+N) aparece al instante */
 .kb-instant .sheet__panel, .kb-instant .sheet__scrim { transition-duration: 0ms !important; }
 
@@ -769,3 +765,28 @@ label.field[data-show="Elegir fecha"]::after { color: var(--ink-3); }
   .sheet[data-size="large"] .sheet__panel { height: calc(100dvh - var(--safe-t) - 36px); }
 }
 .guide__top { top: 0; margin: 0 -2px 6px; padding: 10px 2px 10px; }
+
+/* Calendario: título tocable (mes y año), vista de meses y celdas cómodas */
+.cal__nav { grid-template-columns: auto auto minmax(0, 1fr) auto auto; }
+.cal__title { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 40px; border-radius: 999px; padding: 0 10px; text-align: center; transition: background-color 160ms; }
+.cal__title:active { background: var(--fill); }
+.cal__caret { display: grid; place-items: center; color: var(--ink-3); }
+.cal__caret .i { width: 0.95rem; height: 0.95rem; }
+.cal__body { min-height: 296px; }
+.cal__months { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 6px; }
+.cal__m { min-height: 56px; border-radius: 18px; background: var(--fill); font-weight: 650; transition: transform 140ms var(--ease-out), background-color 160ms; touch-action: manipulation; }
+.cal__m:active { transform: scale(0.96); }
+.cal__m.is-sel { background: var(--brand-fill); color: var(--on-brand); }
+.cal__d, .cal__e { min-height: 44px; }
+
+/* Mensajes emergentes: simétricos y centrados (icono arriba, texto al centro y botón de ancho completo) */
+#toasts { padding-left: max(16px, var(--safe-l)); padding-right: max(16px, var(--safe-r)); }
+.toast { display: grid; grid-auto-flow: row; justify-items: center; align-items: center; gap: 8px; width: fit-content; min-width: min(240px, 100%); max-width: min(420px, 100%); margin-inline: auto; padding: 16px 22px; border-radius: 26px; text-align: center; }
+.toast > .i { width: 1.6rem; height: 1.6rem; }
+.toast .toast__mood { width: 46px; height: 46px; }
+.toast__msg { line-height: 1.35; text-wrap: balance; overflow-wrap: anywhere; }
+.toast__act { margin: 4px 0 0; width: 100%; min-height: 42px; padding: 0 22px; }
+/* Alertas: mismo aire arriba y abajo, y botones iguales */
+.alert__card { width: min(340px, calc(100% - 40px)); padding: 26px 20px 20px; }
+.alert__msg { text-wrap: balance; }
+.alert__btns .btn { min-height: 48px; }
