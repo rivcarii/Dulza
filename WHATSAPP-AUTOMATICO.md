@@ -19,7 +19,7 @@ Código: `functions/index.js` (servidor) y `js/invoice.js` + `js/cloud.js` (app)
 
 1. Entra a <https://developers.facebook.com/> → **Mis apps → Crear app** → tipo **Empresa** → agrega el producto **WhatsApp**.
 2. En **WhatsApp → Configuración de la API** verás un número de prueba y su **ID del número de teléfono** (guárdalo). El número de prueba solo envía a hasta 5 destinatarios que verifiques; para clientes reales agrega **tu propio número** (no puede estar registrado en la app de WhatsApp normal; si es el de la tienda, se usa el modo de coexistencia con WhatsApp Business) y pasa la app a modo **Activo**.
-3. En **WhatsApp Manager → Plantillas de mensajes** crea estas dos (categoría **Utilidad**, idioma **Español**). Los nombres deben ser exactos.
+3. En **WhatsApp Manager → Plantillas de mensajes** crea estas dos (categoría **Utilidad**, idioma **Spanish (COL)**, código `es_CO`). Los nombres deben ser exactos. Si usas otro idioma, cambia `WA_LANG` en `functions/.env`. Cada `{{n}}` pide una muestra: usa los ejemplos de abajo.
 
 **`dulza_factura`** — Encabezado: **Imagen** (sube cualquier imagen de ejemplo). Cuerpo:
 

@@ -10,7 +10,7 @@ const WA_TOKEN = defineSecret('WA_TOKEN');
 const WA_PHONE_ID = defineSecret('WA_PHONE_ID');
 
 const API = 'https://graph.facebook.com/v21.0';
-const LANG = process.env.WA_LANG || 'es';
+const LANG = process.env.WA_LANG || 'es_CO'; // el idioma de las plantillas: Spanish (COL)
 const TEMPLATES = {
   factura: process.env.WA_TPL_FACTURA || 'dulza_factura', // encabezado imagen + 7 variables
   recordatorio: process.env.WA_TPL_RECORDATORIO || 'dulza_recordatorio', // 5 variables
