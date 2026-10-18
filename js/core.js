@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const D = (window.D = window.D || {});
-  D.version = '1.12.0'; // se sube junto con VERSION de sw.js (python .dev/version.py 1.7.0)
+  D.version = '1.12.1'; // se sube junto con VERSION de sw.js (python .dev/version.py 1.7.0)
 
   /* ---------- DOM ---------- */
   D.$ = (s, r = document) => r.querySelector(s);

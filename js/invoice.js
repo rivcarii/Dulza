@@ -112,20 +112,27 @@
 
   /* Envío por WhatsApp con texto ordenado y la imagen de la factura ya copiada para pegarla en el chat */
   wa.manualDoc = async (sale, phone, text) => {
-    // la ventana se abre en el mismo toque (si se espera a la imagen, el navegador la bloquea); después se le pone el chat
-    let win = null;
-    try { win = window.open('about:blank', '_blank'); } catch (e) {}
+    // Celular: el menú de compartir del teléfono adjunta la imagen de verdad (con el texto como pie): se elige WhatsApp y el cliente.
+    if (matchMedia('(pointer: coarse)').matches && navigator.share && navigator.canShare) {
+      try {
+        const blob = await D.invoice.blob(sale, 'png');
+        const file = new File([blob], D.invoice.fileName(sale, 'png'), { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], text, title: `Factura ${sale.number}` });
+          return;
+        }
+      } catch (e) {
+        if (e && e.name === 'AbortError') return; // la persona cerró el menú
+      }
+    }
+    // Computador: se copia la imagen primero (con la página en primer plano, si no el navegador no deja) y luego se abre el chat
     const copied = await wa.copyImage(sale);
-    const link = D.waLink(phone, text);
-    if (win && !win.closed) {
-      try { win.opener = null; } catch (e) {}
-      win.location.href = link;
-    } else if (!D.openWa(phone, text)) {
+    if (!D.openWa(phone, text)) {
       D.toast(`El navegador frenó la ventana de WhatsApp.${copied ? ' La imagen ya está copiada: pégala en el chat.' : ''}`, { tone: 'info', icon: 'whatsapp', action: { label: 'Abrir WhatsApp', fn: () => D.openWa(phone, text) } });
       return;
     }
     const sinChat = phone ? '' : ' Elige también el contacto.';
-    D.toast(copied ? `Imagen de la factura copiada: en WhatsApp mantén pulsado el mensaje y elige «Pegar».${sinChat}` : `No pude copiar la imagen: usa «Compartir imagen» para adjuntarla.${sinChat}`, { tone: copied ? 'ok' : 'info', icon: 'image' });
+    D.toast(copied ? `Imagen de la factura copiada: en WhatsApp pega con Ctrl+V (o mantén pulsado y «Pegar»).${sinChat}` : `No pude copiar la imagen: usa «Compartir imagen» para adjuntarla.${sinChat}`, { tone: copied ? 'ok' : 'info', icon: 'image' });
   };
 
   /* ---------- Envío automático (API oficial de WhatsApp, a través de la función de Firebase) ---------- */
@@ -624,7 +631,7 @@
             <button class="row row--tap row--noavatar" data-inv="dl-png"><span class="row__icon">${D.icon('download')}</span><span class="row__main"><span class="row__title">Descargar imagen</span></span></button>
           </div>`,
         footer: `<button class="btn btn--wa" data-inv="wa">${D.icon('whatsapp')}Enviar por WhatsApp${customer ? ' a ' + esc(customer.name.split(' ')[0]) : ''}</button>
-                 <p class="muted center" style="font-size:.8rem">Abre el chat con el detalle ordenado y copia la imagen de la factura: en WhatsApp mantén pulsado y elige «Pegar». O usa «Compartir imagen» para adjuntarla directo.</p>`,
+                 <p class="muted center" style="font-size:.8rem">En el celular abre el menú de compartir con la factura adjunta y el detalle ordenado: elige WhatsApp y el cliente. En el computador abre el chat y copia la imagen: pégala con Ctrl+V.</p>`,
         onClose: () => url && URL.revokeObjectURL(url),
       });
       D.invoice.render(sale, 2).then((c) =>

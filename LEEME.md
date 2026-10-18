@@ -151,3 +151,5 @@ assets/brand/         Versión vectorial anterior (logos y personaje en SVG/PNG)
 - **Factura estilo tiquete:** papel angosto de bordes dentados, logo centrado arriba, texto de máquina, líneas punteadas, sello de estado, código de barras y marca de agua de postres translúcidos (`WATERMARK` y la opacidad en `js/invoice.js`).
 - **Campos de formulario:** etiqueta arriba y valor debajo, alineados a la izquierda (`.field` en `css/components.css`).
 - Se quitó el respaldo en Google Drive: la nube es solo Firebase.
+
+- **Enviar por WhatsApp (v1.12.1):** en el celular se abre el menú de compartir con la imagen de la factura adjunta y el detalle como texto (se elige WhatsApp y el cliente); en el computador se copia la imagen y se abre el chat del cliente para pegarla con Ctrl+V. El envío automático por la API de Meta quedó apagado: necesita Firebase Blaze y una cuenta de pago en Meta (ver `WHATSAPP-AUTOMATICO.md`).
