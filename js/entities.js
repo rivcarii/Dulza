@@ -348,9 +348,11 @@
           </div>
           <div class="form-title">Precios</div>
           <div class="fields">
-            <label class="field"><span>Precio de venta</span><input name="price" inputmode="decimal" data-money value="${p && p.price ? D.fmtNum(p.price) : ''}" placeholder="0"></label>
+            <label class="field"><span>Precio de contado</span><input name="price" inputmode="decimal" data-money value="${p && p.price ? D.fmtNum(p.price) : ''}" placeholder="0"></label>
+            <label class="field"><span>Precio a plazo</span><input name="priceCredit" inputmode="decimal" data-money value="${p && p.priceCredit ? D.fmtNum(p.priceCredit) : ''}" placeholder="Igual al de contado"></label>
             <label class="field"><span>Costo de producirlo</span><input name="cost" inputmode="decimal" data-money value="${p && p.cost ? D.fmtNum(p.cost) : ''}" placeholder="0"></label>
           </div>
+          <p class="form-note">El <b>precio de contado</b> se usa cuando te pagan en el momento; el <b>precio a plazo</b>, cuando la venta es a 8, 15, 30 días u otro plazo. Si lo dejas vacío, vale lo mismo en los dos casos.</p>
           <p class="form-note" id="pf-margin"></p>
           <div class="form-title">Disponibilidad</div>
           <div class="fields"><label class="field"><span>Disponible para vender</span><span class="field__sw"><span class="switch"><input type="checkbox" name="active" ${st.active ? 'checked' : ''}><i></i></span></span></label></div>
@@ -362,7 +364,8 @@
         const el = $('#pf-margin', sh.el);
         if (v.price > 0) {
           const g = v.price - (v.cost || 0);
-          el.textContent = v.cost > 0 ? `Ganas ${D.money(g)} por unidad (${Math.round((g / v.price) * 100)}% del precio).` : 'Agrega el costo para ver cuánto ganas por unidad.';
+          const gc = v.priceCredit > 0 ? v.priceCredit - (v.cost || 0) : null;
+          el.textContent = v.cost > 0 ? `De contado ganas ${D.money(g)} por unidad (${Math.round((g / v.price) * 100)}%)${gc != null ? `; a plazo, ${D.money(gc)} (${Math.round((gc / v.priceCredit) * 100)}%)` : ''}.` : 'Agrega el costo para ver cuánto ganas por unidad.';
         } else el.textContent = '';
       };
       margin();
@@ -390,7 +393,7 @@
         const v = D.ui.read(sh.body);
         if (!v.name) return;
         const rec = p || { id: D.uid() };
-        Object.assign(rec, { name: v.name, emoji: st.emoji, category: v.category, price: Math.max(0, v.price), cost: Math.max(0, v.cost), active: v.active });
+        Object.assign(rec, { name: v.name, emoji: st.emoji, category: v.category, price: Math.max(0, v.price), priceCredit: Math.max(0, v.priceCredit || 0), cost: Math.max(0, v.cost), active: v.active });
         if (!p) D.data.products.push(rec);
         D.store.commit('products');
         saved = rec.id;

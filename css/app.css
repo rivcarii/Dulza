@@ -790,3 +790,38 @@ label.field[data-show="Elegir fecha"]::after { color: var(--ink-3); }
 .alert__card { width: min(340px, calc(100% - 40px)); padding: 26px 20px 20px; }
 .alert__msg { text-wrap: balance; }
 .alert__btns .btn { min-height: 48px; }
+
+/* Dos precios: contado y a plazo */
+.pick-card__alt { display: block; color: var(--ink-2); font-size: 0.72rem; font-weight: 600; margin-top: -2px; }
+.prod__plazo { display: block; color: var(--ink-2); font-size: 0.72rem; font-weight: 600; font-family: var(--font-body, inherit); letter-spacing: 0; margin-top: 1px; }
+.total-alt { margin: -6px 2px 8px; text-align: center; color: var(--ink-2); font-size: 0.82rem; }
+.total-alt:empty { display: none; }
+.total-alt b { color: var(--brand-ink); }
+
+/* ==========================================================================
+   Pruebas con datos extremos (nombres larguísimos, cifras de miles de millones, pantallas de 320 px)
+   ========================================================================== */
+/* los nombres identifican a quien se le vende: se parten en hasta 2 líneas en vez de cortarse en una sola */
+.row__title { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: anywhere; line-height: 1.25; }
+.row__amount { white-space: nowrap; }
+.row__end { max-width: 48%; }
+.row__main { min-width: 0; }
+.chart__head > *, .chart__readout > * { min-width: 0; }
+.chart__readout b { overflow-wrap: anywhere; }
+.seg button { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 359px) {
+  .summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .summary__item { padding: 10px 8px; }
+  .summary__item small { font-size: 0.7rem; }
+  .chart__readout { flex-wrap: wrap; }
+  .chart__readout span { text-align: left; }
+  .toolbar__row { flex-wrap: wrap; }
+  .toolbar__row > .search { flex: 1 1 100%; }
+  .toolbar__row > .select-pill { flex: 1 1 100%; }
+}
+/* el pie de las hojas nunca es más ancho que la hoja, aunque un botón o un texto lo pida */
+.sheet__foot { grid-template-columns: minmax(0, 1fr); }
+.sheet__foot--row { grid-template-columns: none; }
+.sheet__foot .btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.guide__form > .guide__in { width: 0; }
+.sheet__foot > .guide__form { min-width: 0; }

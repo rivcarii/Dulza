@@ -50,6 +50,29 @@
       ? { customerId: editing.customerId || '', date: editing.date, items: clone(editing.items), discount: editing.discount || 0, term: editing.term || 0, note: editing.note || '', method: 'Efectivo', initial: 0 }
       : { customerId: opts.customerId || '', date: D.today(), items: [], discount: 0, term: S.defaultTerm, note: '', method: 'Efectivo', initial: 0 };
     const sub = () => D.r2(sumBy(st.items, (i) => i.qty * i.price));
+    /* Dos precios: al cambiar entre contado y plazo, los postres del catálogo toman el precio que corresponde
+       (los editados a mano o de ventas anteriores se respetan). */
+    const priced = (it) => it.auto === true && it.pid && D.product.byId(it.pid);
+    const reprice = () => {
+      let n = 0;
+      st.items.forEach((it) => {
+        const p = priced(it);
+        if (!p) return;
+        const np = D.product.priceFor(p, st.term);
+        if (np !== it.price) { it.price = np; n++; }
+      });
+      if (n && sh) D.toast(st.term > 0 ? 'Precios a plazo aplicados' : 'Precios de contado aplicados', { icon: 'coin' });
+      return n;
+    };
+    const altHtml = () => {
+      const other = st.term > 0 ? 0 : 15;
+      let diff = false;
+      const alt = D.r2(sumBy(st.items, (i) => { const p = priced(i); const pr = p ? D.product.priceFor(p, other) : i.price; if (pr !== i.price) diff = true; return i.qty * pr; }));
+      if (!diff) return '';
+      const altTotal = Math.max(0, D.r2(alt - Math.min(st.discount || 0, alt)));
+      const d = D.r2(total() - altTotal);
+      return st.term > 0 ? `De contado serían <b>${D.money(altTotal)}</b>${d > 0 ? ` · ahorrarían ${D.money(d)}` : ''}` : `A plazo serían <b>${D.money(altTotal)}</b>`;
+    };
     const total = () => Math.max(0, D.r2(sub() - Math.min(st.discount || 0, sub())));
     const custName = () => {
       const c = D.customer.byId(st.customerId);
@@ -91,6 +114,7 @@
       <div class="fields"><label class="field field--area"><span class="sr-only">Nota</span><textarea name="note" rows="2" placeholder="Ej.: entregar el viernes antes de las 3 pm">${esc(st.note)}</textarea></label></div>`;
 
     const footer = () => `<div class="total-bar"><small>Total a cobrar</small><b id="f-total">${D.money(total())}</b></div>
+      <p class="total-alt" id="f-alt">${altHtml()}</p>
       <button type="button" class="btn" id="f-save" data-do="save" ${st.items.length ? '' : 'disabled'}>${editing ? 'Guardar cambios' : 'Guardar venta'}</button>`;
 
     const sh = D.sheet.open({ title: editing ? `Editar ${editing.number}` : 'Nueva venta', size: 'large', body: body(), footer: footer(), form: true });
@@ -99,6 +123,7 @@
       if (what === 'all' || what === 'cart') $('#f-cart', sh.el).innerHTML = cartHtml();
       if (what === 'all' || what === 'pay') $('#f-pay', sh.el).innerHTML = payHtml();
       $('#f-total', sh.el).textContent = D.money(total());
+      $('#f-alt', sh.el).innerHTML = altHtml();
       $('#f-save', sh.el).disabled = !st.items.length;
       if (what === 'cust') $('#f-cust', sh.el).textContent = custName() || 'Elegir (opcional)';
       $('#f-cust', sh.el).classList.toggle('is-empty', !custName());
@@ -115,8 +140,10 @@
       const t = e.target;
       if (t.name === 'note') st.note = t.value;
       if (t.name === 'term') {
+        const was = st.term > 0;
         st.term = Math.max(0, Math.round(+t.value || 0));
         $('.term-hint', sh.el).innerHTML = termHint();
+        if (was !== st.term > 0) { reprice(); refresh('cart'); }
       }
       sh.dirty = true;
     });
@@ -162,7 +189,7 @@
           F.productPicker(st.items, () => {
             sh.dirty = true;
             refresh('cart');
-          });
+          }, st.term);
           break;
         case 'inc':
           st.items[i].qty += 1;
@@ -193,7 +220,8 @@
             st.term = +b.dataset.v;
           }
           sh.dirty = true;
-          refresh('pay');
+          reprice();
+          refresh('all');
           break;
         }
         case 'save':
@@ -272,11 +300,11 @@
   /* ==========================================================================
      Selector de postres (rejilla) y editor de ítem
      ========================================================================== */
-  F.productPicker = (items, onChange) => {
+  F.productPicker = (items, onChange, term = 0) => {
     const prods = D.data.products.filter((p) => p.active !== false);
     const qtyOf = (pid) => sumBy(items.filter((i) => i.pid === pid), (i) => i.qty);
     const card = (p) => `<div class="pick-card" data-pid="${p.id}" data-qty="${qtyOf(p.id)}" data-text="${esc((p.name + ' ' + (p.category || '')).toLowerCase())}">
-        <span class="pick-card__emoji">${D.glyph(p.emoji)}</span><span class="pick-card__name">${esc(p.name)}</span><span class="pick-card__price">${D.money(p.price)}</span>
+        <span class="pick-card__emoji">${D.glyph(p.emoji)}</span><span class="pick-card__name">${esc(p.name)}</span><span class="pick-card__price">${D.money(D.product.priceFor(p, term))}</span>${D.product.hasTwo(p) ? `<small class="pick-card__alt">${term > 0 ? 'Contado ' + D.money(p.price) : 'Plazo ' + D.money(p.priceCredit)}</small>` : ''}
         <span class="pick-card__qty">${qtyOf(p.id)}</span>
         <button type="button" class="pick-card__hit" data-pk="add" aria-label="Agregar ${esc(p.name)}"></button>
         <button type="button" class="icon-btn icon-btn--sm pick-card__dec" data-pk="dec" aria-label="Quitar uno de ${esc(p.name)}" ${qtyOf(p.id) ? '' : 'hidden'}>${D.icon('minus')}</button>
@@ -321,7 +349,7 @@
       let line = items.find((i) => i.pid === pid);
       if (k === 'add') {
         if (line) line.qty += 1;
-        else items.push({ id: D.uid(), pid, name: p.name, emoji: p.emoji, qty: 1, price: p.price, cost: p.cost || 0 });
+        else items.push({ id: D.uid(), pid, name: p.name, emoji: p.emoji, qty: 1, price: D.product.priceFor(p, term), auto: true, cost: p.cost || 0 });
         D.haptic(6);
       } else if (k === 'dec' && line) {
         line.qty -= 1;
@@ -351,6 +379,7 @@
       if (!v.name) return;
       item.name = v.name;
       item.qty = Math.max(1, Math.round(v.qty) || 1);
+      if (item.pid && item.price !== Math.max(0, v.price)) item.auto = false; // precio cambiado a mano: ya no se recalcula
       item.price = Math.max(0, v.price);
       if (isNew) item.cost = Math.max(0, v.cost || 0);
       sh.close('force');

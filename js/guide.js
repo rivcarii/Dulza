@@ -305,14 +305,22 @@
      Flujo: VENTA
      ========================================================================== */
   let V = null;
+  const vp = (p) => D.product.priceFor(p, V ? V.term : 0); // precio de contado o a plazo según el plazo elegido
   function ventaStart() {
     V = { customer: null, qty: {}, term: D.data.settings.defaultTerm || 0, initial: 0, method: 'Efectivo' };
     if (!D.data.products.some((p) => p.active !== false)) return say(bubble(`<p>Primero necesitas al menos un postre en tu menú.</p>${acts([['Agregar postre', () => D.act['product.new'](), 'gbtn--main']])}`), { delay: 300 });
-    say(bubble(`<p>¡Vamos con una venta! 🧁 ¿Para quién es?</p>${pickCustomer((c) => { V.customer = c; ventaItems(); })}`), { delay: 350 });
+    say(bubble(`<p>¡Vamos con una venta! 🧁 ¿Para quién es?</p>${pickCustomer((c) => { V.customer = c; ventaTerm(); })}`), { delay: 350 });
+  }
+  /* El plazo se pregunta antes de los postres: cada postre tiene precio de contado y precio a plazo */
+  function ventaTerm() {
+    const hab = D.data.settings.defaultTerm || 0;
+    const two = D.data.products.some((p) => D.product.hasTwo(p));
+    const t = (n, l) => [l, () => { me(l); V.term = n; ventaItems(); }, n === hab ? 'gbtn--main' : ''];
+    say(bubble(`<p>¿Cómo la cobras?${two ? ' Los postres tienen <b>precio de contado</b> y <b>precio a plazo</b>.' : ''}</p>${chips([t(0, 'De contado'), t(8, 'A 8 días'), t(15, 'A 15 días'), t(30, 'A 30 días')])}`), { delay: 300 });
   }
   function ventaItems() {
     const prods = D.data.products.filter((p) => p.active !== false);
-    const rows = prods.map((p) => `<div class="gpick__row" data-pid="${p.id}"><span class="gpick__ic">${D.glyph(p.emoji)}</span><span class="gpick__n"><b>${esc(p.name)}</b><small>${money(p.price)}</small></span>
+    const rows = prods.map((p) => `<div class="gpick__row" data-pid="${p.id}"><span class="gpick__ic">${D.glyph(p.emoji)}</span><span class="gpick__n"><b>${esc(p.name)}</b><small>${money(vp(p))}${D.product.hasTwo(p) ? ` · ${V.term > 0 ? 'contado ' + money(p.price) : 'plazo ' + money(p.priceCredit)}` : ''}</small></span>
       <span class="gqty"><button type="button" data-d="-1" aria-label="Quitar uno de ${esc(p.name)}">−</button><output>${V.qty[p.id] || 0}</output><button type="button" data-d="1" aria-label="Agregar uno de ${esc(p.name)}">+</button></span></div>`).join('');
     say(bubble(`<p>¿Qué postres lleva${V.customer ? ' ' + esc(V.customer.name.split(' ')[0]) : ''}? Toca <b>+</b> para agregar:</p><div class="gpick">${rows}</div>
       <div class="gpick__tot"><span>Total</span><b data-tot>${money(0)}</b></div>${acts([['Listo', () => ventaItemsDone(), 'gbtn--main']])}`), { delay: 350 });
@@ -320,7 +328,7 @@
       const box = lastEl();
       if (!box) return;
       const upd = () => {
-        const tot = prods.reduce((a, p) => a + (V.qty[p.id] || 0) * p.price, 0);
+        const tot = prods.reduce((a, p) => a + (V.qty[p.id] || 0) * vp(p), 0);
         $('[data-tot]', box).textContent = money(tot);
       };
       upd();
@@ -342,12 +350,10 @@
     const sel = ventaLines();
     if (!sel.length) return say(bubble('<p>Aún no elegiste ningún postre. Toca <b>+</b> en los que lleva.</p>'));
     me(sel.map((p) => `${V.qty[p.id]}× ${p.name}`).join(', '));
-    const hab = D.data.settings.defaultTerm || 0;
-    const t = (n, l) => [l, () => { me(l); V.term = n; ventaPay(); }, n === hab ? 'gbtn--main' : ''];
-    say(bubble(`<p>¿Cómo la cobras?</p>${chips([t(0, 'De contado'), t(8, 'A 8 días'), t(15, 'A 15 días'), t(30, 'A 30 días')])}`), { delay: 300 });
+    ventaPay();
   }
   function ventaPay() {
-    const tot = ventaLines().reduce((a, p) => a + V.qty[p.id] * p.price, 0);
+    const tot = ventaLines().reduce((a, p) => a + V.qty[p.id] * vp(p), 0);
     if (V.term === 0) return say(bubble(`<p>¿Con qué método pagó?</p>${methodChips((m) => { V.method = m; V.initial = tot; ventaSummary(); })}`), { delay: 300 });
     say(bubble(`<p>¿Dejó un abono inicial?</p>${chips([
       ['Sin abono', () => { me('Sin abono'); V.initial = 0; ventaSummary(); }],
@@ -364,8 +370,8 @@
   function ventaMethod() { say(bubble(`<p>¿Con qué método pagó el abono?</p>${methodChips((m) => { V.method = m; ventaSummary(); })}`), { delay: 250 }); }
   function ventaSummary() {
     const sel = ventaLines();
-    const tot = sel.reduce((a, p) => a + V.qty[p.id] * p.price, 0);
-    const rows = sel.map((p) => line(`${V.qty[p.id]}× ${esc(p.name)}`, money(V.qty[p.id] * p.price))).join('');
+    const tot = sel.reduce((a, p) => a + V.qty[p.id] * vp(p), 0);
+    const rows = sel.map((p) => line(`${V.qty[p.id]}× ${esc(p.name)}`, money(V.qty[p.id] * vp(p)))).join('');
     say(bubble(`<p><b>Resumen de la venta</b></p><div class="grec">${line('Cliente', esc(V.customer ? V.customer.name : 'Cliente ocasional'))}<div class="grec__rule"></div>${rows}<div class="grec__rule"></div>
       ${line('Total', money(tot), 'grec__t')}${line('Plazo', V.term ? V.term + ' días' : 'Contado')}${V.initial > 0 ? line(V.term ? 'Abono' : 'Pago', `${money(V.initial)} · ${esc(V.method)}`) : ''}</div>
       ${acts([['✅ Registrar venta', () => ventaSave(), 'gbtn--main'], ['Cambiar postres', () => ventaItems()], ['Cancelar', () => { me('Cancelar'); say(menu('Listo, no registré nada.'), { delay: 250 }); }, 'gbtn--ghost']])}`), { delay: 350 });
@@ -377,7 +383,7 @@
     const date = D.today();
     const seq = D.sale.nextSeq();
     const sale = { id: D.uid(), seq, number: D.sale.number(seq), payments: [], at: Date.now(), date, customerId: V.customer ? V.customer.id : '',
-      items: sel.map((p) => ({ id: D.uid(), pid: p.id, name: p.name, emoji: p.emoji, price: p.price, cost: p.cost || 0, qty: V.qty[p.id] })), discount: 0, term: V.term, due: D.addDays(date, V.term), note: '' };
+      items: sel.map((p) => ({ id: D.uid(), pid: p.id, name: p.name, emoji: p.emoji, price: vp(p), auto: true, cost: p.cost || 0, qty: V.qty[p.id] })), discount: 0, term: V.term, due: D.addDays(date, V.term), note: '' };
     const tot = D.sale.total(sale);
     if (V.initial > 0) sale.payments.push({ id: D.uid(), date, amount: Math.min(V.initial, tot), method: V.method, note: V.term ? 'Abono inicial' : '', at: Date.now() });
     D.data.sales.push(sale);

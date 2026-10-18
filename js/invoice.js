@@ -89,6 +89,12 @@
     return `Hola ${D.sale.customerName(sale)} 🧁\nRecibí tu pago de *${D.money(amount)}* para la factura *${sale.number}*. ¡Gracias! 💖\n${bal > 0 ? `Saldo pendiente: *${D.money(bal)}*${sale.due ? ` · ${wa.dueText(sale)}` : ''}` : '✅ Tu factura quedó *pagada*.'}\n— ${S.name}`;
   };
 
+  /* Primer nombre para los botones: una palabra, de hasta 14 letras (un correo o un nombre larguísimo no revienta el botón) */
+  const firstName = (n) => {
+    const w = String(n || '').trim().split(/\s+/)[0] || '';
+    return w.length > 14 ? w.slice(0, 13) + '…' : w;
+  };
+
   /* Abre el chat con el texto listo. Devuelve false si el navegador bloqueó la ventana (pasa en iPhone después de preparar la
      imagen): entonces un toque más en «Abrir WhatsApp» la abre. */
   wa.send = (phone, text, o = {}) => {
@@ -630,7 +636,7 @@
             <button class="row row--tap row--noavatar" data-inv="dl-pdf"><span class="row__icon">${D.icon('download')}</span><span class="row__main"><span class="row__title">Descargar PDF</span></span></button>
             <button class="row row--tap row--noavatar" data-inv="dl-png"><span class="row__icon">${D.icon('download')}</span><span class="row__main"><span class="row__title">Descargar imagen</span></span></button>
           </div>`,
-        footer: `<button class="btn btn--wa" data-inv="wa">${D.icon('whatsapp')}Enviar por WhatsApp${customer ? ' a ' + esc(customer.name.split(' ')[0]) : ''}</button>
+        footer: `<button class="btn btn--wa" data-inv="wa">${D.icon('whatsapp')}Enviar por WhatsApp${customer ? ' a ' + esc(firstName(customer.name)) : ''}</button>
                  <p class="muted center" style="font-size:.8rem">En el celular abre el menú de compartir con la factura adjunta y el detalle ordenado: elige WhatsApp y el cliente. En el computador abre el chat y copia la imagen: pégala con Ctrl+V.</p>`,
         onClose: () => url && URL.revokeObjectURL(url),
       });

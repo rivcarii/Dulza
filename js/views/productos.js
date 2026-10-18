@@ -19,7 +19,7 @@
           <span class="prod__top"><span class="prod__emoji" aria-hidden="true">${D.glyph(p.emoji)}</span>${p.active === false ? D.ui.chip('neutral', 'Pausado') : p.cost > 0 ? D.ui.chip(m >= 50 ? 'ok' : m >= 30 ? 'warn' : 'bad', Math.round(m) + '% ganancia') : ''}</span>
           <span class="prod__name">${esc(p.name)}</span>
           <span class="prod__cat">${esc(p.category || 'Sin categoría')}</span>
-          <span class="prod__price">${D.money(p.price)}</span></button>`;
+          <span class="prod__price">${D.money(p.price)}${D.product.hasTwo(p) ? `<small class="prod__plazo">Plazo ${D.money(p.priceCredit)}</small>` : ''}</span></button>`;
       })
       .join('')}</div>`;
   }

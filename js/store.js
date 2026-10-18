@@ -314,6 +314,9 @@
   D.product = {
     byId: (id) => D.data.products.find((p) => p.id === id),
     margin: (p) => (p.price > 0 ? ((p.price - (p.cost || 0)) / p.price) * 100 : 0),
+    // dos precios: `price` es el de contado y `priceCredit` el de a plazo (vacío = el mismo)
+    priceFor: (p, term) => (term > 0 && p.priceCredit > 0 ? p.priceCredit : p.price),
+    hasTwo: (p) => p.priceCredit > 0 && p.priceCredit !== p.price,
   };
 
   /* Cuentas por cobrar / pagar, ordenadas por vencimiento */

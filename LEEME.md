@@ -159,3 +159,15 @@ assets/brand/         Versión vectorial anterior (logos y personaje en SVG/PNG)
 - **Módulo de consulta** (`js/consulta.js`): botón de filtros arriba a la derecha en **Ventas**, **Cobros** y **Compras**. Filtros combinables (cliente o proveedor, estado, fechas, valores, texto), resultados y totales al instante, y **Descargar CSV**.
 - **Listas desplegables y calendario con la apariencia de Dulza** (`js/pickers.js`): los `<select>` y los campos de fecha ya no abren el menú del navegador; abren una hoja de Dulza. Para que un campo nuevo lo use, basta ponerlo dentro de un `<label class="field">` o `.select-pill`.
 - **Dulce** tiene encabezado fijo y botón «Nuevo chat»; los botones del chat se acomodan en cuadrícula en el celular. Los accesos rápidos del Inicio alinean sus iconos.
+
+## Dos precios: contado y a plazo (v1.18)
+
+- Cada postre tiene **Precio de contado** y **Precio a plazo** (Postres → editar). Si el de a plazo se deja vacío, vale lo mismo en los dos casos.
+- Al vender, el precio se ajusta solo al plazo: **Contado** usa el precio de contado; **8, 15, 30 días u otro plazo** usa el de a plazo. Si cambias el plazo con los postres ya elegidos, los precios se actualizan y la app avisa. Un precio editado a mano en una línea se respeta.
+- En la venta se ve el otro caso: «De contado serían $X · ahorrarían $Y» (o «A plazo serían $Z»). La rejilla de postres muestra los dos precios.
+- Dulce pregunta el plazo **antes** de los postres para mostrar el precio correcto.
+- Las ventas anteriores no cambian: guardan el precio con el que se hicieron.
+
+## Pruebas con datos extremos (v1.18)
+
+Se probó con nombres larguísimos, correos como nombre, nombres de una letra, emojis, cifras de miles de millones y pantallas de 320 px. Se corrigió: nombres que se cortaban en una línea (ahora hasta 2 líneas), el gráfico del Inicio que ensanchaba la pantalla, el resumen de Ventas que dejaba una tarjeta sola, y el pie de las hojas (chat de Dulce y factura) que se salía del ancho.
