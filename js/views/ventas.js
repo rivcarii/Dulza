@@ -11,7 +11,8 @@
   const filters = () => {
     const all = D.q.sales();
     const n = (f) => all.filter((s) => f(D.sale.status(s))).length;
-    const label = (t, c) => (c ? `${t} · ${c}` : t);
+    // el conteo va como globito en la esquina, para que el texto de la pestaña no se corte en pantallas angostas
+    const label = (t, c) => (c ? { html: `${esc(t)}<i class="seg__n">${c}</i>` } : t);
     return [['todas', 'Todas'], ['abiertas', label('Por cobrar', n((x) => x !== 'paid'))], ['vencidas', label('Vencidas', n((x) => x === 'overdue'))], ['pagadas', 'Pagadas']];
   };
 

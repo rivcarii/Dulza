@@ -234,6 +234,7 @@
     // nada de la app se dibuja hasta que se entra con usuario y clave
     if (D.auth) await D.auth.gate();
     shell.build();
+    if (D.guide) D.guide.mount(); // botón flotante de Dulce
 
     let sig = '';
     D.store.on(() => {

@@ -262,7 +262,37 @@
   D.act['guide.open'] = () => open();
   D.act['guide.hide'] = () => { mark('hide'); D.toast('Puedes volver a abrir a Dulce desde «Ayuda»', { icon: 'sparkle' }); D.router.render({ force: true }); };
 
-  D.guide = { open, card, progress, STEPS, KB, find, _norm: norm };
+  /* Botón flotante con la carita de Dulce: siempre a la vista, abajo a la izquierda (el «+» de venta queda a la derecha) */
+  function mount() {
+    if ($('.bot-fab')) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'bot-fab';
+    b.setAttribute('data-act', 'guide.open');
+    b.setAttribute('aria-label', 'Abrir a Dulce, tu guía');
+    b.innerHTML = `<span class="bot-fab__face">${D.mood('hello', { cls: 'bot-fab__mood' })}</span><span class="bot-fab__badge" hidden></span><span class="bot-fab__tip" role="status" hidden>¿Necesitas ayuda? Soy <b>Dulce</b> 🧁</span>`;
+    document.body.appendChild(b);
+    const badge = $('.bot-fab__badge', b);
+    const sync = () => {
+      const p = progress();
+      const left = p.total - p.done;
+      badge.hidden = !left || flag('hide');
+      badge.textContent = left > 9 ? '9+' : String(left);
+      badge.setAttribute('aria-label', `${left} pasos pendientes`);
+    };
+    sync();
+    D.store.on(sync);
+    // un globito de saludo, una vez por sesión
+    let seen = false;
+    try { seen = sessionStorage.getItem('dulza-bot-tip') === '1'; sessionStorage.setItem('dulza-bot-tip', '1'); } catch (e) {}
+    if (!seen) {
+      const tip = $('.bot-fab__tip', b);
+      setTimeout(() => { tip.hidden = false; tip.classList.add('is-in'); }, 1600);
+      setTimeout(() => { tip.classList.remove('is-in'); setTimeout(() => (tip.hidden = true), 260); }, 8000);
+    }
+  }
+
+  D.guide = { open, card, progress, STEPS, KB, find, mount, _norm: norm };
 
   /* Una sola vez, si la persona es nueva (aún sin ventas): ofrece la guía con un aviso */
   D.guide.offer = () => {

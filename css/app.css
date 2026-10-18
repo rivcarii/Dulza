@@ -586,3 +586,22 @@ dialog.lock.is-out { opacity: 0; transition: opacity 220ms var(--ease-out); }
 @media (min-width: 900px) { .dash > .c-guide { grid-column: span 12; } .c-guide__btns { grid-column: auto; } .c-guide { grid-template-columns: auto minmax(0, 1fr) auto; } }
 @media (prefers-reduced-motion: reduce) { .gmsg--typing i { animation: none; } .gbar i { transition: none; } }
 .select-pill.is-off { opacity: 0.45; transition: opacity 160ms var(--ease-out); }
+
+/* ---------- Botón flotante de Dulce ---------- */
+.bot-fab { position: fixed; z-index: 24; left: max(16px, var(--safe-l)); bottom: calc(var(--tabbar-h) + max(10px, calc(var(--safe-b) - 8px)) + 18px); width: 62px; height: 62px; border-radius: 50%; padding: 0; background: transparent; touch-action: manipulation; animation: bot-in 320ms var(--ease-out) both; transition: transform 160ms var(--ease-out); }
+.bot-fab:active { transform: scale(0.94); }
+.bot-fab__face { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: linear-gradient(145deg, var(--surface-hi, #fff), var(--brand-soft)); box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--brand-fill) 55%, white), 0 2px 4px rgba(0, 0, 0, 0.12), 0 14px 26px -8px color-mix(in oklab, var(--brand-fill) 60%, transparent); overflow: hidden; }
+.bot-fab__mood { width: 54px; height: 54px; margin-top: 3px; }
+.bot-fab__badge { position: absolute; top: -2px; right: -2px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #d92d4b; color: #fff; font-size: 0.74rem; font-weight: 800; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--bg); }
+.bot-fab__badge[hidden], .bot-fab__tip[hidden] { display: none; }
+.bot-fab__tip { position: absolute; left: 70px; bottom: 12px; width: max-content; max-width: 190px; padding: 10px 14px; border-radius: 18px 18px 18px 6px; background: var(--surface); color: var(--ink); font-size: 0.88rem; line-height: 1.3; text-align: left; box-shadow: var(--shadow-m, 0 10px 24px rgba(0, 0, 0, 0.16)); opacity: 0; transform: translateX(-6px); transition: opacity 220ms var(--ease-out), transform 260ms var(--ease-out); pointer-events: none; }
+.bot-fab__tip.is-in { opacity: 1; transform: none; }
+@keyframes bot-in { from { opacity: 0; transform: scale(0.85); } }
+.is-locked .bot-fab { display: none; }
+@media (min-width: 700px) { .bot-fab { left: calc(max(12px, var(--safe-l)) + var(--side-w) + 20px); bottom: 28px; } }
+@media (hover: hover) and (pointer: fine) { .bot-fab:hover { transform: translateY(-2px); } .bot-fab:active { transform: scale(0.94); } }
+@media (prefers-reduced-motion: reduce) { .bot-fab { animation: none; } .bot-fab__tip { transition: opacity 160ms; transform: none; } }
+
+/* cifras de los resúmenes: se ajustan al ancho de la tarjeta y no se parten */
+.summary__item { container-type: inline-size; }
+.summary .summary__item b { font-size: clamp(0.8rem, 13cqi, 1.25rem); white-space: nowrap; overflow-wrap: normal; }

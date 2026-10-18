@@ -88,7 +88,7 @@
   ui.seg = (name, opts, value) => {
     const idx = Math.max(0, opts.findIndex((o) => o[0] === value));
     return `<div class="seg" role="group" data-seg="${name}" style="--n:${opts.length};--i:${idx}">${opts
-      .map((o) => `<button type="button" data-v="${o[0]}" aria-pressed="${o[0] === value}">${esc(o[1])}</button>`)
+      .map((o) => `<button type="button" data-v="${o[0]}" aria-pressed="${o[0] === value}">${typeof o[1] === 'object' ? o[1].html : esc(o[1])}</button>`)
       .join('')}</div>`;
   };
 
