@@ -162,7 +162,21 @@
     return TEXT[s] || '';
   }
   const chip = () => `<div class="sync-chip" data-sync-chip data-s="${D.sync.status}" role="status"><i aria-hidden="true"></i><span>${esc(statusText())}</span></div>`;
+  /* Barra fina arriba mientras se conecta o se suben cambios */
+  function bar() {
+    let b = document.getElementById('sync-bar');
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'sync-bar';
+      b.setAttribute('aria-hidden', 'true');
+      b.innerHTML = '<i></i>';
+      document.body.appendChild(b);
+    }
+    return b;
+  }
   function paint() {
+    const busy = D.sync.status === 'connecting' || (D.sync.status === 'online' && D.sync.pendingCount() > 0);
+    bar().classList.toggle('is-on', busy);
     document.querySelectorAll('[data-sync-chip]').forEach((el) => {
       el.dataset.s = D.sync.status;
       const span = el.querySelector('span');

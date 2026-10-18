@@ -629,7 +629,7 @@
         title: `Factura ${sale.number}`,
         wide: true,
         size: 'large',
-        body: `<div class="invoice-preview" id="inv-prev"><div class="spinner" role="status" aria-label="Preparando factura"></div></div>
+        body: `<div class="invoice-preview" id="inv-prev"><div class="skel-ticket" role="status" aria-label="Preparando factura"><i class="skel skel--logo"></i><i class="skel skel--l1"></i><i class="skel skel--l2"></i><i class="skel skel--row"></i><i class="skel skel--row"></i><i class="skel skel--row"></i><i class="skel skel--tot"></i><i class="skel skel--bar"></i></div></div>
           <div class="list list--spaced" style="margin-top:14px">
             <button class="row row--tap row--noavatar" data-inv="share-pdf"><span class="row__icon">${D.icon('file')}</span><span class="row__main"><span class="row__title">Compartir PDF</span><span class="row__sub">Elige WhatsApp u otra app</span></span><span class="row__chev">${D.icon('chevR')}</span></button>
             <button class="row row--tap row--noavatar" data-inv="share-png"><span class="row__icon">${D.icon('image')}</span><span class="row__main"><span class="row__title">Compartir imagen</span><span class="row__sub">Se ve directo en el chat</span></span><span class="row__chev">${D.icon('chevR')}</span></button>
@@ -653,18 +653,19 @@
         const b = e.target.closest('[data-inv]');
         if (!b) return;
         const k = b.dataset.inv;
-        if (k === 'wa') wa.sendDoc(sale, customer && customer.phone, wa.invoiceText(sale));
+        if (b.classList.contains('is-busy')) return;
+        if (k === 'wa') D.busy(b, wa.sendDoc(sale, customer && customer.phone, wa.invoiceText(sale)));
         else {
           const type = k.endsWith('pdf') ? 'pdf' : 'png';
-          b.style.opacity = '0.5';
-          if (k.startsWith('share')) {
-            const r = await D.invoice.share(sale, type);
-            if (r === 'downloaded') D.toast('Factura descargada. Adjúntala en WhatsApp.', { tone: 'info', icon: 'download' });
-          } else {
-            D.download(await D.invoice.blob(sale, type), D.invoice.fileName(sale, type));
-            D.toast('Factura descargada', { icon: 'download' });
-          }
-          b.style.opacity = '';
+          await D.busy(b, (async () => {
+            if (k.startsWith('share')) {
+              const r = await D.invoice.share(sale, type);
+              if (r === 'downloaded') D.toast('Factura descargada. Adjúntala en WhatsApp.', { tone: 'info', icon: 'download' });
+            } else {
+              D.download(await D.invoice.blob(sale, type), D.invoice.fileName(sale, type));
+              D.toast('Factura descargada', { icon: 'download' });
+            }
+          })());
         }
       });
     },

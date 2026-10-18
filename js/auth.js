@@ -204,8 +204,10 @@
       if (!user.value.trim() || !pass.value) return say('Escribe tu usuario y tu clave.', 'think');
       go.disabled = true;
       go.textContent = 'Entrando…';
+      go.classList.add('is-busy');
       const res = await check(user.value, pass.value);
       go.textContent = 'Entrar';
+      go.classList.remove('is-busy');
       if (!res.ok && res.network) {
         // sin internet no se puede comprobar con la nube: no cuenta como intento fallido
         go.disabled = false;

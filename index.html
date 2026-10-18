@@ -28,12 +28,34 @@ else if(matchMedia('(prefers-color-scheme: dark)').matches){r.dataset.theme='dar
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Titan+One&display=swap">
+<style>
+/* Pantalla de carga: se pinta de inmediato, antes de que la app termine de arrancar */
+#splash{position:fixed;inset:0;z-index:200;display:grid;place-content:center;justify-items:center;gap:14px;padding:24px;background:var(--bg,#fff7f5);color:var(--ink,#3a2330);text-align:center;transition:opacity .38s cubic-bezier(.23,1,.32,1),visibility 0s .38s}
+#splash.is-out{opacity:0;visibility:hidden;pointer-events:none}
+.splash__char{width:min(150px,38vw);height:auto;animation:splash-bob 1.8s ease-in-out infinite;filter:drop-shadow(0 12px 18px rgba(60,20,40,.2))}
+.splash__word{width:min(170px,46vw);height:auto}
+.splash__bar{width:min(180px,50vw);height:5px;border-radius:99px;background:rgba(140,100,160,.18);overflow:hidden}
+.splash__bar i{display:block;width:45%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#8f4dff,#ff3d8b);animation:splash-slide 1.25s cubic-bezier(.65,0,.35,1) infinite}
+.splash__txt{font:600 .95rem/1.2 Nunito,system-ui,sans-serif;opacity:.7}
+.splash__dots i{display:inline-block;width:5px;height:5px;margin-left:3px;border-radius:50%;background:currentColor;animation:splash-dot 1s ease-in-out infinite}
+.splash__dots i:nth-child(2){animation-delay:.15s}.splash__dots i:nth-child(3){animation-delay:.3s}
+@keyframes splash-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes splash-slide{0%{transform:translateX(-100%)}100%{transform:translateX(320%)}}
+@keyframes splash-dot{0%,70%,100%{opacity:.3;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.splash__char{animation:none}.splash__bar i{animation:none;width:100%;opacity:.6}.splash__dots i{animation:none;opacity:.6}}
+</style>
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/base.css">
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
+<div id="splash" role="status" aria-live="polite" aria-label="Cargando Dulza">
+  <img class="splash__char" src="assets/brand/gpt/v3/personaje.png" alt="" width="150" height="150" decoding="async">
+  <img class="splash__word" src="assets/brand/gpt/v3/logos/logo-nombre.png" alt="Dulza" width="170" decoding="async">
+  <div class="splash__bar" aria-hidden="true"><i></i></div>
+  <p class="splash__txt">Preparando tu negocio<span class="splash__dots" aria-hidden="true"><i></i><i></i><i></i></span></p>
+</div>
 <div class="backdrop" aria-hidden="true"></div>
 <a class="skip" href="#main">Saltar al contenido</a>
 

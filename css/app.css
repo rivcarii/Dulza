@@ -825,3 +825,29 @@ label.field[data-show="Elegir fecha"]::after { color: var(--ink-3); }
 .sheet__foot .btn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .guide__form > .guide__in { width: 0; }
 .sheet__foot > .guide__form { min-width: 0; }
+
+/* ==========================================================================
+   Animaciones de carga
+   ========================================================================== */
+/* barra fina arriba mientras se sincroniza */
+#sync-bar { position: fixed; z-index: 95; top: 0; left: 0; right: 0; height: 3px; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 260ms var(--ease-out); }
+#sync-bar.is-on { opacity: 1; }
+#sync-bar i { display: block; width: 40%; height: 100%; border-radius: 99px; background: linear-gradient(90deg, transparent, var(--brand-fill), var(--accent), transparent); animation: sync-slide 1.3s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+@keyframes sync-slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+/* esqueleto con brillo que recorre las piezas mientras se prepara algo */
+.skel { display: block; border-radius: 10px; background: linear-gradient(100deg, var(--fill) 30%, color-mix(in oklab, var(--fill) 40%, var(--surface)) 50%, var(--fill) 70%) 0 0 / 220% 100%; animation: skel-shine 1.4s ease-in-out infinite; }
+@keyframes skel-shine { from { background-position: 120% 0; } to { background-position: -100% 0; } }
+.skel-ticket { display: grid; justify-items: center; gap: 12px; width: min(300px, 86%); margin: 12px auto; padding: 26px 22px 30px; border-radius: 14px; background: #fffdfb; box-shadow: inset 0 0 0 1px var(--line); }
+:root[data-theme="dark"] .skel-ticket { background: #2a2025; }
+.skel--logo { width: 120px; height: 84px; border-radius: 22px; }
+.skel--l1 { width: 70%; height: 14px; } .skel--l2 { width: 46%; height: 12px; }
+.skel--row { width: 100%; height: 38px; }
+.skel--tot { width: 60%; height: 26px; margin-top: 4px; }
+.skel--bar { width: 82%; height: 44px; margin-top: 6px; border-radius: 6px; }
+/* botones ocupados: el texto se atenúa y aparece un indicador giratorio */
+.btn.is-busy, .gbtn.is-busy { position: relative; color: transparent !important; pointer-events: none; }
+.btn.is-busy::after, .gbtn.is-busy::after { content: ""; position: absolute; left: 50%; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; border: 2.5px solid color-mix(in oklab, currentColor 30%, transparent); border-top-color: var(--on-brand, #fff); animation: spin 0.8s linear infinite; }
+.btn--tint.is-busy::after, .btn--plain.is-busy::after, .gbtn:not(.gbtn--main):not(.gbtn--wa).is-busy::after { border-color: var(--fill-2); border-top-color: var(--brand-fill); }
+.row.is-busy { pointer-events: none; opacity: 0.6; position: relative; }
+.row.is-busy::after { content: ""; position: absolute; right: 16px; top: 50%; width: 18px; height: 18px; margin-top: -9px; border-radius: 50%; border: 2.5px solid var(--fill-2); border-top-color: var(--brand-fill); animation: spin 0.8s linear infinite; }
+@media (prefers-reduced-motion: reduce) { #sync-bar i { animation: none; width: 100%; opacity: 0.6; } .skel { animation: none; } .btn.is-busy::after, .gbtn.is-busy::after, .row.is-busy::after { animation-duration: 2.4s; } }

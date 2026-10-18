@@ -232,8 +232,21 @@
   /* ==========================================================================
      Arranque
      ========================================================================== */
+  /* Pantalla de carga: se retira con un fundido en cuanto los datos están listos (al menos medio segundo, para que no parpadee) */
+  const splashAt = performance.now();
+  function hideSplash() {
+    const s = $('#splash');
+    if (!s) return;
+    setTimeout(() => {
+      s.classList.add('is-out');
+      setTimeout(() => s.remove(), 460);
+    }, Math.max(0, 550 - (performance.now() - splashAt)));
+  }
+  setTimeout(hideSplash, 7000); // por si algo tarda: nunca se queda pegada
+
   async function boot() {
     await D.store.init();
+    hideSplash();
     D.theme.init();
     // nada de la app se dibuja hasta que se entra con usuario y clave
     if (D.auth) await D.auth.gate();

@@ -396,6 +396,15 @@
     });
   D.alert = (title, message) => D.confirm({ title, message, single: true, ok: 'Entendido' });
 
+  /* Botón ocupado: muestra un indicador y no deja tocarlo dos veces mientras dura la tarea (promesa) */
+  D.busy = (el, task) => {
+    if (!el) return Promise.resolve(task);
+    el.classList.add('is-busy');
+    el.setAttribute('aria-busy', 'true');
+    const done = () => { el.classList.remove('is-busy'); el.removeAttribute('aria-busy'); };
+    return Promise.resolve(task).then((v) => { done(); return v; }, (e) => { done(); throw e; });
+  };
+
   /* ==========================================================================
      Avisos (toasts)
      ========================================================================== */
