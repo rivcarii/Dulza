@@ -153,3 +153,9 @@ assets/brand/         Versión vectorial anterior (logos y personaje en SVG/PNG)
 - Se quitó el respaldo en Google Drive: la nube es solo Firebase.
 
 - **Enviar por WhatsApp (v1.12.1):** en el celular se abre el menú de compartir con la imagen de la factura adjunta y el detalle como texto (se elige WhatsApp y el cliente); en el computador se copia la imagen y se abre el chat del cliente para pegarla con Ctrl+V. El envío automático por la API de Meta quedó apagado: necesita Firebase Blaze y una cuenta de pago en Meta (ver `WHATSAPP-AUTOMATICO.md`).
+
+## Consulta, listas y calendario (v1.16)
+
+- **Módulo de consulta** (`js/consulta.js`): botón de filtros arriba a la derecha en **Ventas**, **Cobros** y **Compras**. Filtros combinables (cliente o proveedor, estado, fechas, valores, texto), resultados y totales al instante, y **Descargar CSV**.
+- **Listas desplegables y calendario con la apariencia de Dulza** (`js/pickers.js`): los `<select>` y los campos de fecha ya no abren el menú del navegador; abren una hoja de Dulza. Para que un campo nuevo lo use, basta ponerlo dentro de un `<label class="field">` o `.select-pill`.
+- **Dulce** tiene encabezado fijo y botón «Nuevo chat»; los botones del chat se acomodan en cuadrícula en el celular. Los accesos rápidos del Inicio alinean sus iconos.

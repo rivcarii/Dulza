@@ -597,16 +597,24 @@
     const first = !flag('seen');
     mark('seen');
     sh = D.sheet.open({
-      title: 'Dulce · tu asistente',
+      title: 'Dulce',
       size: 'large',
       left: false,
       right: { label: 'Listo', cls: 'btn--ghost', onClick: (c) => c.close() },
       trackDirty: false,
-      body: `<div class="guide__msgs" aria-live="polite">${first ? welcome() : fresh()}</div>`,
+      body: `<div class="guide__top"><span class="guide__who">${ava()}<span><b>Dulce</b><small>Tu asistente de Dulza</small></span></span><button type="button" class="gbtn gbtn--ghost guide__new" data-gnew>↺ Nuevo chat</button></div><div class="guide__msgs" aria-live="polite">${first ? welcome() : fresh()}</div>`,
       footer: `<form class="guide__form" autocomplete="off"><input class="guide__in" name="q" placeholder="Escribe: «vender», «cobrar», «comprar»…" enterkeyhint="send" autocomplete="off" aria-label="Escribe lo que necesitas"><button class="btn btn--sm" type="submit">Enviar</button></form>`,
       onClose: () => { sh = null; V = P = null; },
     });
     sh.el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-gnew]')) {
+        // nuevo chat: se borra la conversación y vuelve el menú
+        H = [];
+        V = P = null;
+        $('.guide__msgs', sh.el).innerHTML = fresh();
+        sh.body.scrollTo({ top: 0 });
+        return;
+      }
       const b = e.target.closest('[data-gh]');
       if (!b) return;
       const fn = H[+b.dataset.gh];

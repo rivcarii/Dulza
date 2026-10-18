@@ -56,7 +56,7 @@
         title: 'Compras',
         cls: 'page--narrow',
         sub: D.plural(D.data.purchases.length, 'compra registrada', 'compras registradas'),
-        actions: `<button class="icon-btn glass" data-act="purchase.new" aria-label="Nueva compra">${D.icon('plus')}</button>`,
+        actions: `<button class="icon-btn glass" data-act="consulta.open" data-kind="compras" aria-label="Consultar">${D.icon('sliders')}</button><button class="icon-btn glass" data-act="purchase.new" aria-label="Nueva compra">${D.icon('plus')}</button>`,
         body: `<div class="toolbar" data-rise>
             <div class="toolbar__row">${D.ui.search('compras.q', st.q, 'Buscar proveedor o insumo')}
               <label class="select-pill"><span class="sr-only">Periodo</span><select data-change="compras.period">${D.PERIODS.map((p) => `<option value="${p[0]}" ${p[0] === st.period ? 'selected' : ''}>${p[1]}</option>`).join('')}</select>${D.icon('chevD')}</label></div>

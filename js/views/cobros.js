@@ -101,6 +101,7 @@
         title: 'Cobros',
         cls: 'page--narrow',
         sub: over ? `${D.plural(over, 'venta vencida', 'ventas vencidas')} por cobrar` : 'Todo al día',
+        actions: `<button class="icon-btn glass" data-act="consulta.open" data-kind="cobros" aria-label="Consultar">${D.icon('sliders')}</button>`,
         body: `<div class="toolbar" data-rise>${D.ui.seg('cobros.tab', TABS, st.tab)}${D.ui.seg('cobros.filter', FILTERS, st.filter)}</div>
           <div id="c-sum" data-rise>${c.sum}</div><div id="c-list" data-rise>${c.list}</div>`,
         fab: D.ui.fab('sale.new', 'Nueva venta'),

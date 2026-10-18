@@ -88,7 +88,7 @@
         title: 'Ventas',
         cls: 'page--narrow',
         sub: D.plural(D.data.sales.length, 'venta registrada', 'ventas registradas'),
-        actions: `<button class="icon-btn glass" data-act="sale.new" aria-label="Nueva venta">${D.icon('plus')}</button>`,
+        actions: `<button class="icon-btn glass" data-act="consulta.open" data-kind="ventas" aria-label="Consultar">${D.icon('sliders')}</button><button class="icon-btn glass" data-act="sale.new" aria-label="Nueva venta">${D.icon('plus')}</button>`,
         body: `<div class="toolbar" data-rise>
             <div class="toolbar__row">${D.ui.search('ventas.q', st.q, 'Buscar cliente o factura')}
               <label class="select-pill ${stateFilter() ? 'is-off' : ''}"><span class="sr-only">Periodo</span><select data-change="ventas.period">${D.PERIODS.map((p) => `<option value="${p[0]}" ${p[0] === st.period ? 'selected' : ''}>${p[1]}</option>`).join('')}</select>${D.icon('chevD')}</label></div>
