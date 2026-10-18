@@ -606,18 +606,6 @@ dialog.lock.is-out { opacity: 0; transition: opacity 220ms var(--ease-out); }
 .summary__item { container-type: inline-size; }
 .summary .summary__item b { font-size: clamp(0.8rem, 13cqi, 1.25rem); white-space: nowrap; overflow-wrap: normal; }
 
-/* ---------- Pantalla completa (app instalada) ----------
-   El contenido llega hasta el borde de arriba, debajo de la hora y la batería. En iPhone la barra de estado queda
-   transparente con letras blancas, así que un velo oscuro muy suave detrás de la hora la mantiene legible en modo claro. */
-@media (display-mode: standalone), (display-mode: fullscreen) {
-  .navbar { padding-top: max(var(--safe-t), 0px); }
-}
-@supports (-webkit-touch-callout: none) {
-  @media (display-mode: standalone) {
-    body::before { content: ""; position: fixed; z-index: 90; top: 0; left: 0; right: 0; height: calc(var(--safe-t) + 6px); pointer-events: none; background: linear-gradient(rgba(30, 14, 50, 0.62), rgba(30, 14, 50, 0)); }
-    .is-locked body::before { display: none; }
-  }
-}
 
 /* ---------- Dulce: ventas, compras y pagos dentro del chat ---------- */
 .gbtn--ghost { background: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
@@ -768,3 +756,9 @@ label.field:has(> input[type="date"])::after {
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2384707a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='3'/%3E%3Cpath d='M8 3v4M16 3v4M3 10h18'/%3E%3C/svg%3E") no-repeat right center / 18px;
 }
 label.field[data-show="Elegir fecha"]::after { color: var(--ink-3); }
+
+/* ---------- Borde superior sin costura (iPhone y Android) ----------
+   La barra de estado del teléfono se pinta con el color del tema; la página tiene manchas de color de marca en la esquina.
+   Una franja del mismo color que la barra se difumina hacia el fondo y la división desaparece. */
+.backdrop::after { content: ""; position: absolute; inset: 0 0 auto 0; height: calc(var(--safe-t) + 96px); background: linear-gradient(var(--bg) 0%, color-mix(in oklab, var(--bg) 70%, transparent) 30%, color-mix(in oklab, var(--bg) 25%, transparent) 65%, transparent 100%); }
+.sheet__panel:focus, .alert__card:focus { outline: none; }

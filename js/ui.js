@@ -344,7 +344,12 @@
       dlg.showModal();
       if (o.focus !== false) {
         const first = $('[data-autofocus]', dlg);
-        first ? first.focus({ preventScroll: true }) : panel.setAttribute('tabindex', '-1');
+        if (first) first.focus({ preventScroll: true });
+        else {
+          // el foco va al panel (sin anillo), no al primer botón: así «Listo» o la «X» no aparecen rodeados por un aro
+          panel.setAttribute('tabindex', '-1');
+          panel.focus({ preventScroll: true });
+        }
       }
       // dos frames: el navegador debe pintar el estado inicial antes de animar
       requestAnimationFrame(() => requestAnimationFrame(() => dlg.classList.add('is-open')));

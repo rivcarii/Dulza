@@ -44,7 +44,7 @@
 
       const bg = dark ? C.mix('#120d10', brand, 0.07) : C.mix('#fffaf8', brand, 0.04);
       const meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) meta.setAttribute('content', bg);
+      if (meta) { meta.dataset.base = bg; meta.setAttribute('content', document.documentElement.classList.contains('has-sheet') ? C.mix(bg, '#000000', 0.42) : bg); }
       try {
         localStorage.setItem('dz-theme', JSON.stringify({ mode: S.theme, scheme, vars, bg }));
       } catch (e) {}
@@ -81,4 +81,11 @@
       mqDark.addEventListener ? mqDark.addEventListener('change', onScheme) : mqDark.addListener(onScheme);
     },
   };
+
+  /* Con una hoja abierta, la cortina oscurece la página: la barra de estado del teléfono (Android) se oscurece igual, sin franja clara arriba */
+  new MutationObserver(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta || !meta.dataset.base) return;
+    meta.setAttribute('content', document.documentElement.classList.contains('has-sheet') ? D.color.mix(meta.dataset.base, '#000000', 0.42) : meta.dataset.base);
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 })();
