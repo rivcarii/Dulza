@@ -585,3 +585,4 @@ dialog.lock.is-out { opacity: 0; transition: opacity 220ms var(--ease-out); }
 .c-guide__btns { grid-column: 1 / -1; display: flex; gap: 8px; }
 @media (min-width: 900px) { .dash > .c-guide { grid-column: span 12; } .c-guide__btns { grid-column: auto; } .c-guide { grid-template-columns: auto minmax(0, 1fr) auto; } }
 @media (prefers-reduced-motion: reduce) { .gmsg--typing i { animation: none; } .gbar i { transition: none; } }
+.select-pill.is-off { opacity: 0.45; transition: opacity 160ms var(--ease-out); }

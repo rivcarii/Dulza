@@ -141,6 +141,8 @@
   D.views.reportes = {
     title: 'Reportes',
     render() {
+    // si este mes aún no hay ventas, se muestra todo el historial (hasta que la persona elija un periodo)
+    if (!st.set) st.period = D.data.sales.some((s) => D.inPeriod(s.date, D.period('mes'))) ? 'mes' : 'todo';
       return D.ui.page({
         title: 'Reportes',
         sub: 'Cómo va tu negocio',
@@ -150,6 +152,7 @@
     },
   };
   D.chg['reportes.period'] = (el) => {
+    st.set = true;
     st.period = el.value;
     $('#rep-body').innerHTML = body();
   };
