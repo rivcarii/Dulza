@@ -605,3 +605,88 @@ dialog.lock.is-out { opacity: 0; transition: opacity 220ms var(--ease-out); }
 /* cifras de los resúmenes: se ajustan al ancho de la tarjeta y no se parten */
 .summary__item { container-type: inline-size; }
 .summary .summary__item b { font-size: clamp(0.8rem, 13cqi, 1.25rem); white-space: nowrap; overflow-wrap: normal; }
+
+/* ---------- Pantalla completa (app instalada) ----------
+   El contenido llega hasta el borde de arriba, debajo de la hora y la batería. En iPhone la barra de estado queda
+   transparente con letras blancas, así que un velo oscuro muy suave detrás de la hora la mantiene legible en modo claro. */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  .navbar { padding-top: max(var(--safe-t), 0px); }
+}
+@supports (-webkit-touch-callout: none) {
+  @media (display-mode: standalone) {
+    body::before { content: ""; position: fixed; z-index: 90; top: 0; left: 0; right: 0; height: calc(var(--safe-t) + 6px); pointer-events: none; background: linear-gradient(rgba(30, 14, 50, 0.62), rgba(30, 14, 50, 0)); }
+    .is-locked body::before { display: none; }
+  }
+}
+
+/* ---------- Dulce: ventas, compras y pagos dentro del chat ---------- */
+.gbtn--ghost { background: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
+.gbtn--wa { background: #25a244; color: #fff; }
+.gpick { display: grid; gap: 6px; margin-top: 10px; }
+.gpick__row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 16px; background: var(--fill); }
+.gpick__ic { flex: none; width: 38px; height: 38px; border-radius: 12px; background: var(--surface); display: grid; place-items: center; font-size: 1.5rem; overflow: hidden; }
+.gpick__ic img { width: 30px; height: 30px; object-fit: contain; }
+.gpick__n { flex: 1; min-width: 0; display: grid; }
+.gpick__n b { font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gpick__n small { color: var(--ink-2); font-size: 0.8rem; }
+.gqty { flex: none; display: inline-flex; align-items: center; gap: 2px; background: var(--surface); border-radius: 999px; }
+.gqty button { width: 38px; height: 38px; border-radius: 50%; font-size: 1.25rem; font-weight: 700; color: var(--brand-ink); transition: transform 120ms var(--ease-out), background-color 140ms; touch-action: manipulation; }
+.gqty button:active { transform: scale(0.88); background: var(--fill-2); }
+.gqty output { min-width: 22px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+.gpick__tot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; padding: 0 4px; font-weight: 700; }
+.gpick__tot b { font-family: var(--font-display); font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.gform { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.gform--col { flex-direction: column; }
+.gform__row { display: flex; gap: 8px; }
+.gform__row .gin { min-width: 0; }
+.gin { flex: 1; min-width: 120px; height: 44px; padding: 0 14px; border-radius: 14px; border: 0; background: var(--fill); color: var(--ink); font-size: 1rem; }
+.gin:focus { outline: 2px solid var(--brand-fill); }
+.gitems:empty { display: none; }
+.gitems { margin-top: 8px; }
+/* comprobante en el chat: papel con texto de máquina */
+.grec { margin-top: 10px; padding: 14px 16px; border-radius: 14px; background: #fffdfb; color: #241820; box-shadow: inset 0 0 0 1px var(--line); font-family: "Courier New", Courier, ui-monospace, monospace; font-size: 0.86rem; }
+:root[data-theme="dark"] .grec { background: #2a2025; color: #f3e8ed; }
+.grec__h { font-weight: 800; font-size: 0.95rem; text-align: center; }
+.grec__s { color: var(--ink-2); text-align: center; font-size: 0.8rem; margin-top: 2px; }
+.grec__rule { border-top: 1.5px dashed var(--line); margin: 8px 0; }
+.grec__r { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+.grec__r span { min-width: 0; overflow-wrap: anywhere; }
+.grec__r b { font-weight: 800; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.grec__t { font-size: 1rem; }
+.grec__bad b { color: var(--bad-ink, #b3091f); }
+.grec__ok b { color: #178a55; }
+/* ==========================================================================
+   Ajuste de animaciones (criterios de las habilidades de animación)
+   - Solo transform y opacity; entradas con ease-out; salidas más rápidas que las entradas.
+   - Lo que se usa decenas de veces al día (pestañas, selectores, interruptores) es corto y sin rebote.
+   - Nada parte de scale(0); lo hecho con el teclado no se anima.
+   ========================================================================== */
+.switch i::after { transition: transform 220ms var(--ease-out); }
+.seg::before { transition: transform 260ms var(--ease-in-out); }
+.ready .tabbar__ind { transition: transform 280ms var(--ease-in-out); }
+.tab img.i--candy, .nav-item img.i--candy { transition: transform 180ms var(--ease-out), filter 160ms; }
+.swatch__dot { transition: transform 200ms var(--ease-out), box-shadow 160ms; }
+.swatch__dot .i { transition: opacity 140ms, transform 200ms var(--ease-out); }
+
+/* Hojas: entran en 400 ms y salen en 260 ms; la cortina, un poco más rápida */
+.sheet__scrim { transition-duration: 260ms; }
+.sheet__panel { transition-duration: 400ms; }
+.sheet.is-closing .sheet__panel { transition-duration: 260ms; }
+.sheet.is-closing .sheet__scrim { transition-duration: 200ms; }
+@media (min-width: 700px) {
+  .sheet__panel { transition: transform 320ms var(--ease-out), opacity 200ms var(--ease-out); }
+  .sheet.is-closing .sheet__panel { transition-duration: 200ms, 160ms; }
+}
+/* Avisos y alertas: salida más rápida que la entrada */
+.toast { transition: transform 300ms var(--ease-out), opacity 200ms var(--ease-out); }
+.toast:not(.is-in) { transition-duration: 200ms, 140ms; }
+.alert:not(.is-open) .alert__card { transition-duration: 160ms, 120ms; }
+.alert:not(.is-open) .alert__scrim { transition-duration: 160ms; }
+/* Lo que se abre con el teclado (N, Shift+N) aparece al instante */
+.kb-instant .sheet__panel, .kb-instant .sheet__scrim { transition-duration: 0ms !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .seg::before, .ready .tabbar__ind, .switch i::after { transition-duration: 1ms; }
+  .alert__card { transform: none; transition: opacity 160ms; }
+  .gbtn, .gstep, .gqty button { transition: none; }
+}

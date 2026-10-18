@@ -87,21 +87,26 @@
     io.observe(title);
   }
 
+  /* Cambiar de pestaña se hace decenas de veces al día: solo un fundido corto. La entrada escalonada (con un poco de
+     movimiento) se reserva para la primera pantalla de la sesión. */
+  let firstPaint = true;
   function animateIn(root) {
     const page = $('.page', root);
     if (!page) return;
     const reduce = D.reduceMotion();
+    const intro = firstPaint;
+    firstPaint = false;
     page.animate(
-      reduce ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
-      { duration: reduce ? 160 : 320, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }
+      reduce || !intro ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
+      { duration: reduce || !intro ? 160 : 260, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' }
     );
-    if (!reduce)
+    if (!reduce && intro)
       $$('[data-rise]', root)
-        .slice(0, 10)
+        .slice(0, 8)
         .forEach((el, i) =>
-          el.animate([{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }], {
-            duration: 420,
-            delay: 40 + i * 45,
+          el.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], {
+            duration: 260,
+            delay: 30 + i * 35,
             easing: 'cubic-bezier(0.23, 1, 0.32, 1)',
             fill: 'backwards',
           })
@@ -215,6 +220,9 @@
     if (D.sheet.top() || document.querySelector('dialog[open]')) return;
     if (e.key === 'n' || e.key === 'N') {
       e.preventDefault();
+      // abierto con el teclado: sin animación (se repite cientos de veces)
+      document.documentElement.classList.add('kb-instant');
+      setTimeout(() => document.documentElement.classList.remove('kb-instant'), 700);
       (e.shiftKey ? D.act['purchase.new'] : D.act['sale.new'])?.();
     } else if (e.key === '/') {
       const s = $('.search input');
