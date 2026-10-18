@@ -516,8 +516,8 @@ dialog.lock.is-out { opacity: 0; transition: opacity 220ms var(--ease-out); }
 .lock__sub { color: var(--ink-2); max-width: 30ch; }
 .lock .fields { width: 100%; text-align: left; }
 .lock .field { position: relative; }
-.lock .field input[type="password"], .lock .field input[name="password"] { padding-right: 76px; }
-.lock__eye { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); min-height: 36px; padding: 0 12px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-ink); font-size: 0.85rem; font-weight: 700; }
+.lock .field > input[name="password"] { padding-right: 76px !important; }
+.lock__eye { position: absolute; right: 10px; bottom: 15px; min-height: 36px; padding: 0 12px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-ink); font-size: 0.85rem; font-weight: 700; }
 .lock__error { color: var(--bad-ink, #b3091f); font-weight: 650; font-size: 0.92rem; max-width: 34ch; }
 .lock__error[hidden] { display: none; }
 .lock__go { width: 100%; }

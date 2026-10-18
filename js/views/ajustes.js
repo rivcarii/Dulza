@@ -83,50 +83,39 @@
       <div class="fields" data-rise>
         <div class="field" style="display:block;padding:14px 16px">${D.ui.seg('set.theme', [['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Oscuro']], s.theme)}</div>
         <div class="swatches" role="group" aria-label="Paleta de colores">${D.PALETTES.map((p) => `<button type="button" class="swatch" data-act="set.palette" data-id="${p.id}" aria-pressed="${s.palette === p.id}" aria-label="Paleta ${p.name}"><span class="swatch__dot" style="--a:${p.brand};--b:${p.accent}">${D.icon('check')}</span>${p.name}</button>`).join('')}</div>
-        <label class="field"><span>Color principal</span><span class="field__sw"><input type="color" class="color-input" data-change="set.color" data-key="brand" value="${s.brand}" aria-label="Color principal"></span></label>
-        <label class="field"><span>Color de acento</span><span class="field__sw"><input type="color" class="color-input" data-change="set.color" data-key="accent" value="${s.accent}" aria-label="Color de acento"></span></label>
       </div>
       <p class="form-note">Cambia la app, la factura y el ícono de golpe. Los colores de texto se ajustan solos para que siempre se lean bien.</p>
 
-      <div class="form-title" data-rise>Logo y mascota</div>
+      <div class="form-title" data-rise>Sonido</div>
       <div class="fields" data-rise>
-        <div class="upload"><span class="upload__thumb">${D.art.logo({ size: 64 })}</span><span class="grow"><b>Logo</b><br><span class="muted" style="font-size:.85rem">Cuadrado, se usa en la factura y el menú</span></span>
-          <button class="btn btn--sm btn--tint" data-act="set.pick" data-kind="logo">${s.logo ? 'Cambiar' : 'Subir'}</button>${s.logo ? `<button class="icon-btn icon-btn--sm" data-act="set.reset" data-kind="logo" aria-label="Quitar logo">${D.icon('x')}</button>` : ''}</div>
-        <div class="upload"><span class="upload__thumb">${D.art.mascot({ size: 64 })}</span><span class="grow"><b>Mascota</b><br><span class="muted" style="font-size:.85rem">PNG con fondo transparente se ve mejor</span></span>
-          <button class="btn btn--sm btn--tint" data-act="set.pick" data-kind="mascot">${s.mascot ? 'Cambiar' : 'Subir'}</button>${s.mascot ? `<button class="icon-btn icon-btn--sm" data-act="set.reset" data-kind="mascot" aria-label="Quitar mascota">${D.icon('x')}</button>` : ''}</div>
+        <label class="field"><span>Sonidos de dinero al vender y cobrar</span><span class="field__sw"><span class="switch"><input type="checkbox" data-change="set.sound" ${s.sound !== false ? 'checked' : ''}><i></i></span></span></label>
       </div>
-      <input type="file" id="file-img" accept="image/*" hidden>
 
       <div class="form-title" data-rise>Seguridad</div>
       <div class="list" data-rise>
-        <button class="row row--tap row--noavatar" data-act="auth.change"><span class="row__icon">${D.icon('shield')}</span><span class="row__main"><span class="row__title">Cambiar clave</span><span class="row__sub">${D.auth.usingDefault() ? 'Sigues con la clave por defecto: cámbiala' : 'Usuario: ' + esc(D.auth.user())}</span></span><span class="row__chev">${D.icon('chevR')}</span></button>
+        <button class="row row--tap row--noavatar" data-act="auth.user"><span class="row__icon">${D.icon('users')}</span><span class="row__main"><span class="row__title">Cambiar usuario</span><span class="row__sub">Usuario actual: ${esc(D.auth.user())}</span></span><span class="row__chev">${D.icon('chevR')}</span></button>
+        <button class="row row--tap row--noavatar" data-act="auth.change"><span class="row__icon">${D.icon('shield')}</span><span class="row__main"><span class="row__title">Cambiar clave</span><span class="row__sub">${D.auth.usingDefault() ? 'Sigues con la clave por defecto: cámbiala' : 'Protege la entrada a la app'}</span></span><span class="row__chev">${D.icon('chevR')}</span></button>
         <button class="row row--tap row--noavatar" data-act="auth.lock"><span class="row__icon">${D.icon('lock')}</span><span class="row__main"><span class="row__title">Bloquear ahora</span><span class="row__sub">Vuelve a pedir usuario y clave</span></span></button>
       </div>
-      <p class="form-note">La app pide usuario y clave al abrirla y tras 10 minutos sin usarla. Es un candado para este dispositivo: tus datos no se cifran.</p>
+      <p class="form-note">La app pide usuario y clave al abrirla y tras 10 minutos sin usarla.</p>
 
       <div class="form-title" data-rise>Datos compartidos</div>
       ${D.cloud.rows()}
 
-      <div class="form-title" data-rise>Respaldo en la nube</div>
-      ${D.drive.rows()}
-
-      <div class="form-title" data-rise>Tus datos</div>
-      <div class="fields" data-rise>
-        <div class="field" style="min-height:58px"><span style="display:flex;align-items:center;gap:10px">${D.icon(storage[2])}${esc(storage[1])}</span></div>
-      </div>
-      <div class="list" style="margin-top:12px" data-rise>
+      <div class="form-title" data-rise>Respaldo</div>
+      <div class="list" data-rise>
         <button class="row row--tap row--noavatar" data-act="data.export"><span class="row__icon">${D.icon('download')}</span><span class="row__main"><span class="row__title">Guardar respaldo</span><span class="row__sub">${s.lastBackup ? 'Último: ' + D.fmtDate(s.lastBackup) : 'Descarga un archivo con todos tus datos'}</span></span></button>
-        <button class="row row--tap row--noavatar" data-act="data.import"><span class="row__icon">${D.icon('upload')}</span><span class="row__main"><span class="row__title">Restaurar respaldo</span><span class="row__sub">Útil para pasar tus datos a otro dispositivo</span></span></button>
-        <button class="row row--tap row--noavatar" data-act="data.demo"><span class="row__icon">${D.icon('sparkle')}</span><span class="row__main"><span class="row__title">Cargar datos de ejemplo</span><span class="row__sub">Para explorar la app</span></span></button>
       </div>
       <input type="file" id="file-json" accept="application/json,.json" hidden>
-      <div class="list" style="margin-top:12px" data-rise>
-        <button class="row row--tap row--noavatar row--bad" data-act="data.clear"><span class="row__icon">${D.icon('trash')}</span><span class="row__main"><span class="row__title">Borrar ventas, compras y clientes</span><span class="row__sub">Conserva tus ajustes</span></span></button>
+      <p class="form-note">${esc(storage[1])}. Con los datos compartidos activados, la otra persona también tiene una copia en la nube.</p>
+
+      <div class="form-title" data-rise>Zona de cuidado</div>
+      <div class="list" data-rise>
+        <button class="row row--tap row--noavatar row--bad" data-act="data.clear"><span class="row__icon">${D.icon('trash')}</span><span class="row__main"><span class="row__title">Borrar todos los datos</span><span class="row__sub">Ventas, compras, clientes y postres. Conserva tus ajustes</span></span></button>
       </div>
-      <p class="form-note">Tus datos viven en este dispositivo (funcionan sin internet). Para usar Dulza en dos dispositivos, guarda un respaldo y restáuralo en el otro.</p>
 
       <div class="about" data-rise>${D.art.mascot({ cls: 'mascot--alive', mood: 'hug' })}<b style="color:var(--ink)">${esc(s.name)} · versión ${D.version}</b><span>Hecha con cariño para endulzar tus cuentas.</span>
-        ${D.install.standalone ? '' : `<button class="btn btn--sm btn--tint" data-act="app.install">${D.icon('download')}Instalar app</button>`}</div>`,
+        <span class="row-flex" style="gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn btn--sm btn--tint" data-act="app.update">${D.icon('sparkle')}Buscar actualización</button>${D.install.standalone ? '' : `<button class="btn btn--sm btn--tint" data-act="app.install">${D.icon('download')}Instalar app</button>`}</span></div>`,
     });
   }
 

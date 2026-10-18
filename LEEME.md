@@ -35,40 +35,21 @@ Para probarla en tu computadora (necesita Python): ejecuta `python .dev/serve.py
 
 ## Acceso con usuario y clave
 
-- Al abrir la app pide **usuario y clave**. El usuario es `anaparr` (da igual si va en mayúsculas); la clave inicial se entrega aparte y **no está escrita en el código ni en este repositorio**.
+- Al abrir la app pide **usuario y clave**. El usuario inicial es `Admin` (da igual si va en mayúsculas) y la clave inicial se entrega aparte: **no está escrita en el código ni en este repositorio**, solo su huella. Las cuentas de la nube (`anaparr`, `rivcarii`) entran con su propia clave.
+- **Cambiar el usuario:** Ajustes → Seguridad → Cambiar usuario (3 a 20 letras, números, punto o guion bajo; pide la clave). Con la nube vinculada el usuario es el de la cuenta y no se cambia desde ahí.
 - Se vuelve a pedir tras **10 minutos sin usarla**, al volver de segundo plano pasado ese tiempo y con **Ajustes → Seguridad → Bloquear ahora**. Recargar la página mientras se usa no la pide otra vez.
 - **Cambiar la clave:** Ajustes → Seguridad → Cambiar clave (mínimo 8 caracteres, con letras y números). Mientras siga la clave inicial, la app lo recuerda con un aviso al entrar.
 - **Intentos fallidos:** después de 5 seguidos hay una pausa de 30 segundos, que se duplica con cada 5 más (hasta 5 minutos).
 - **Dónde vive la clave:** en `js/auth.js` solo está la huella (SHA-256 con sal y 30 000 vueltas) de la clave inicial. La clave que elija Ana se guarda como huella en este navegador (`localStorage`, entrada `dulza-auth`) y no viaja en los respaldos.
 - **Alcance:** es un candado para el dispositivo. Frena a quien tome el celular o la computadora, pero los datos guardados no están cifrados: alguien con conocimientos técnicos podría leerlos.
-- **Si se olvida la clave:** no hay recuperación por correo (la app no tiene servidor). Borrar los datos del sitio en el navegador restablece la clave inicial, pero también borra las ventas guardadas en ese dispositivo; por eso conviene guardar respaldos (Ajustes → Tus datos).
+- **Si se olvida la clave:** no hay recuperación por correo (la app no tiene servidor). Borrar los datos del sitio en el navegador restablece la clave inicial, pero también borra las ventas guardadas en ese dispositivo; por eso conviene guardar respaldos (Ajustes → Respaldo).
 
 ## Personalizar la marca
 
-- **Colores:** Ajustes → Apariencia (paletas listas o dos colores propios). Todo se recalcula: botones, factura, ícono, modo oscuro y contraste del texto.
-- **Logo y mascota:** por defecto la app usa el personaje y el logo de GPT (ver «Marca»). En Ajustes → Logo y mascota se puede subir otra imagen; se usa en la factura, el menú y las pantallas vacías.
+- **Colores:** Ajustes → Apariencia (paletas listas). Todo se recalcula: botones, factura, ícono, modo oscuro y contraste del texto.
+- **Logo y mascota:** por defecto la app usa el personaje y el logo de GPT (ver «Marca»). Ya no se pueden subir otras desde Ajustes, para evitar confusiones.
 - **Valores por defecto de la marca** (para cuando ya tengan su paleta definitiva): `js/store.js` (`D.PALETTES`, `D.defaults`) y `css/theme.css` (`--brand`, `--accent`).
 - **Ícono de la app** (`assets/icon-*.png`, `apple-touch-icon.png`, `favicon-*.png`): están hechos a partir del personaje (`assets/brand/gpt/v3/personaje.png`) sobre un mosaico rosa. Si cambias esa imagen hay que regenerarlos (`P.makeBrand()` de `.dev/proc.js`); no se actualizan solos.
-
-## Respaldo en Google Drive
-
-Ajustes → **Respaldo en la nube** guarda y restaura el respaldo completo (clientes, ventas, compras, postres, ajustes y logo) en el Drive de la persona que use la app.
-
-- **Dónde queda:** en la carpeta oculta de la app (`appDataFolder`), con el archivo `dulza-respaldo.json`. No aparece en «Mi unidad» y solo esta app puede leerlo. Se puede quitar desde la cuenta de Google (Seguridad → Conexiones de terceros).
-- **Qué hace:** *Guardar ahora en Drive* sube el respaldo (reemplaza al anterior), *Restaurar desde Drive* trae el último y reemplaza los datos del dispositivo (pide confirmación y muestra la fecha). La app avisa al entrar si pasaron más de 7 días sin guardar.
-- **Pasar los datos a otro dispositivo:** guardar en uno, abrir la app en el otro, conectar la misma cuenta de Google y restaurar.
-- **Alcance:** es un respaldo, no una sincronización en tiempo real: no mezcla cambios hechos a la vez en dos dispositivos. Cada cuenta de Google ve solo su propio respaldo.
-- **Internet:** solo hace falta al guardar o restaurar; el inicio de sesión de Google se carga al tocar «Conectar».
-
-### Configurarlo (una sola vez, en Google Cloud)
-
-1. Entrar a <https://console.cloud.google.com/> con la cuenta de Google que será dueña del proyecto y crear un proyecto llamado `Dulza`.
-2. **APIs y servicios → Biblioteca**: buscar **Google Drive API** y pulsar **Habilitar**.
-3. **APIs y servicios → Pantalla de consentimiento de OAuth** (o *Google Auth Platform*): tipo de usuario **Externo**, nombre `Dulza`, correo de soporte y de contacto. En **Alcances** agregar `.../auth/drive.appdata` (más `openid` y `email`). En **Usuarios de prueba** agregar los correos que usarán la app y, para que el permiso no caduque, **Publicar la aplicación** (esos alcances no son sensibles: no pide verificación de Google).
-4. **APIs y servicios → Credenciales → Crear credenciales → ID de cliente de OAuth**: tipo **Aplicación web**; en **Orígenes de JavaScript autorizados** poner `https://rivcarii.github.io` (solo el dominio, sin ruta) y, para pruebas locales, `http://localhost:5173`.
-5. Copiar el **ID de cliente** (termina en `.apps.googleusercontent.com`; es público, **no** hace falta el secreto) y pegarlo en `CLIENT_ID` al inicio de `js/drive.js`. Subir la versión (`python .dev/version.py ...`) y publicar.
-
-Mientras `CLIENT_ID` esté vacío, la sección dice «Todavía sin configurar».
 
 ## Datos compartidos entre dos personas (en construcción)
 
@@ -163,3 +144,10 @@ assets/brand/         Versión vectorial anterior (logos y personaje en SVG/PNG)
 - La app usa Nunito para el texto y Titan One para títulos y cifras grandes; ambas se guardan en el dispositivo la primera vez que se abre con internet, para que funcionen sin conexión.
 - Cuando se defina la paleta definitiva, hay que cambiar el color de marca de la app (Ajustes → Apariencia o `js/store.js`) y revisar que el ícono y el logo de GPT combinen. Los PNG de GPT no cambian de color solos.
 - El logo de GPT trae sus propias letras; Titan One se usa en los títulos y las cifras de la app y en la factura.
+## Sonidos, actualizaciones y factura (v1.11)
+
+- **Sonidos de dinero** (`js/sound.js`): se generan con Web Audio, sin archivos. «Cha-ching» al registrar una venta y monedas al cobrar (un acorde más largo si el cobro deja la factura pagada). Se apagan en Ajustes → Sonido.
+- **Aviso de actualización:** ahora es una ventana emergente («Actualizar ahora» / «Más tarde») que no se va sola. La app busca versión nueva al abrirse, al volver a primer plano, al recuperar internet y cada 10 minutos, leyendo `version.json` directo de internet además del service worker. Ajustes → **Buscar actualización** la fuerza. `python .dev/version.py X.Y.Z` actualiza `sw.js`, `js/core.js` y `version.json`; sin subir la versión no hay aviso.
+- **Factura estilo tiquete:** papel angosto de bordes dentados, logo centrado arriba, texto de máquina, líneas punteadas, sello de estado, código de barras y marca de agua de postres translúcidos (`WATERMARK` y la opacidad en `js/invoice.js`).
+- **Campos de formulario:** etiqueta arriba y valor debajo, alineados a la izquierda (`.field` en `css/components.css`).
+- Se quitó el respaldo en Google Drive: la nube es solo Firebase.

@@ -226,7 +226,8 @@
       D.store.commit('sales', 'settings');
       sh.close('force');
       if (editing) D.toast('Venta actualizada');
-      else setTimeout(() => F.saleDone(sale.id), D.reduceMotion() ? 0 : 260);
+      else D.sound && D.sound.sale();
+      if (!editing) setTimeout(() => F.saleDone(sale.id), D.reduceMotion() ? 0 : 260);
     }
     return sh;
   };
@@ -598,6 +599,7 @@
       D.addPayment(kind, id, { amount: v.amount, date: v.date, method: v.method, note: v.note });
       sh.close('force');
       if (kind === 'sale') {
+        D.sound && D.sound.coin(v.amount >= bal - 0.005);
         const c = D.sale.customer(doc);
         D.toast(`Abono de ${D.money(v.amount)} registrado`, { action: { label: 'Avisar', fn: () => D.wa.sendDoc(doc, c && c.phone, D.wa.paymentText(doc, v.amount)) } });
       } else D.toast(`Pago de ${D.money(v.amount)} registrado`);

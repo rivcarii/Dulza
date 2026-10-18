@@ -280,11 +280,10 @@
     } else {
       list =
         `<div class="row row--noavatar"><span class="row__icon">${D.icon('cloud')}</span><span class="row__main"><span class="row__title" data-sync-title>${esc(statusText())}</span><span class="row__sub">Cuenta: ${esc(s.user || '')}</span></span></div>` +
-        row('cloud.sync', 'upload', 'Sincronizar ahora', 'Sube lo pendiente y baja lo nuevo') +
         row('cloud.logout', 'x', 'Desconectar este dispositivo', 'Deja de compartir los datos', 'row--bad');
     }
     return `<div class="list" data-rise>${list}</div>
-      <p class="form-note">Los clientes, postres, ventas, compras, proveedores y los datos del negocio se comparten con la otra persona. El tema, el logo subido y el prefijo de factura son de cada dispositivo.</p>`;
+      <p class="form-note">Los clientes, postres, ventas, compras y proveedores se comparten con la otra persona y se guardan solos. El tema y el prefijo de factura son de cada dispositivo.</p>`;
   }
 
   D.cloud = { configured: true, linked: () => !!read().linked, user: () => read().user || '', signIn, changePassword, signOut, start, boot, rows, chip, statusText, adapter, _wrap: wrap };

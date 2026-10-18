@@ -268,7 +268,6 @@
       setTimeout(() => D.toast('Sigues con la clave por defecto: cámbiala en Ajustes → Seguridad', { tone: 'info', icon: 'shield' }), 2400);
     }
 
-    if (D.drive) D.drive.remind();
     if (D.cloud) D.cloud.boot(); // si el dispositivo está vinculado, retoma la sincronización
 
     registerWorker();
@@ -276,33 +275,80 @@
 
   /* Service worker: funciona sin internet y avisa si hay una versión nueva */
   function registerWorker() {
+    D.act['app.update'] = () => D.toast('Ya tienes la última versión', { icon: 'checkCircle' }); // se reemplaza al registrar el service worker
     if (!('serviceWorker' in navigator)) return;
     const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
     if (location.protocol === 'file:' || (local && !location.search.includes('sw'))) return;
     navigator.serviceWorker
       .register('sw.js')
       .then((reg) => {
-        const notify = (worker) =>
-          D.toast('Hay una versión nueva de Dulza', {
-            tone: 'info',
-            icon: 'sparkle',
-            action: {
-              label: 'Actualizar',
-              fn: () => {
-                worker.postMessage('skipWaiting');
-              },
-            },
+        /* Ventana emergente (no un aviso que se va solo): se queda hasta que la persona elige.
+           «Más tarde» vuelve a preguntar en 15 minutos o al abrir la app otra vez. */
+        let asking = false, snooze = 0, waitingWorker = null;
+        const refresh = (w) => {
+          if (w) {
+            w.postMessage('skipWaiting'); // al activarse, controllerchange recarga la app
+            setTimeout(() => location.reload(), 5000); // por si el navegador no avisa del cambio
+          } else hardRefresh();
+        };
+        const ask = async (w, remote) => {
+          if (w) waitingWorker = w;
+          if (asking || Date.now() < snooze) return;
+          asking = true;
+          D.haptic && D.haptic(12);
+          const ok = await D.confirm({
+            title: 'Hay una versión nueva de Dulza',
+            message: `Actualiza para tener las últimas mejoras${remote ? ' (' + remote + ')' : ''}. Tus datos no se tocan y la app se reinicia en un segundo.`,
+            ok: 'Actualizar ahora',
+            cancel: 'Más tarde',
           });
-        // busca versiones nuevas al volver a la app y cada media hora, para que las apps instaladas se enteren solas
-        const look = () => reg.update().catch(() => {});
+          asking = false;
+          if (ok) refresh(waitingWorker);
+          else snooze = Date.now() + 15 * 60 * 1000;
+        };
+        /* Plan B sin service worker: borra lo guardado y recarga desde internet */
+        const hardRefresh = async () => {
+          try {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map((r) => r.unregister()));
+            const keys = await caches.keys();
+            await Promise.all(keys.filter((k) => k.startsWith('dulza-v')).map((k) => caches.delete(k)));
+          } catch (e) {}
+          location.reload();
+        };
+        /* Mira version.json (siempre desde internet): si trae otra versión, hay una nueva aunque el navegador tarde en notarlo */
+        const remoteVersion = async () => {
+          try {
+            const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+            return r.ok ? (await r.json()).version : null;
+          } catch (e) { return null; }
+        };
+        const look = async ({ manual = false } = {}) => {
+          reg.update().catch(() => {});
+          if (reg.waiting && navigator.serviceWorker.controller) { snooze = manual ? 0 : snooze; return ask(reg.waiting), true; }
+          const v = await remoteVersion();
+          if (v && v !== D.version) {
+            if (manual) snooze = 0;
+            // da un momento a que el service worker termine de bajar la versión; si no, usa el plan B
+            setTimeout(() => ask(reg.waiting || null, 'v' + v), reg.installing ? 4000 : 1500);
+            return true;
+          }
+          return false;
+        };
+        D.act['app.update'] = async () => {
+          D.toast('Buscando actualizaciones…', { tone: 'info', icon: 'sparkle' });
+          if (!(await look({ manual: true }))) D.toast('Ya tienes la última versión', { icon: 'checkCircle' });
+        };
+        // busca versiones nuevas al abrir, al volver a la app y cada 10 minutos, para que las apps instaladas se enteren solas
         document.addEventListener('visibilitychange', () => { if (!document.hidden) look(); });
-        setInterval(look, 30 * 60 * 1000);
-        if (reg.waiting && navigator.serviceWorker.controller) notify(reg.waiting);
+        setInterval(look, 10 * 60 * 1000);
+        window.addEventListener('online', () => look());
+        look();
         reg.addEventListener('updatefound', () => {
           const w = reg.installing;
           w &&
             w.addEventListener('statechange', () => {
-              if (w.state === 'installed' && navigator.serviceWorker.controller) notify(w);
+              if (w.state === 'installed' && navigator.serviceWorker.controller) ask(w);
             });
         });
       })

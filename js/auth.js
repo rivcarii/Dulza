@@ -8,9 +8,9 @@
   const D = window.D;
   const { esc } = D;
 
-  const USER = 'anaparr';
+  const USER = 'admin';
   const SALT = 'dulza:v1:5c1e9a7d3b04f2a8';
-  const DEFAULT_HASH = '6b2945af8fee95de7714dcae20a83f169461293e0dbb995b96f011c37cd995c2'; // huella de la clave por defecto
+  const DEFAULT_HASH = '35b96a0793118fb2ca538bb207dcfd970883548676676e0c1ede879f20b5c076'; // huella de la clave por defecto
   const ROUNDS = 30000;
   const IDLE_MS = 10 * 60 * 1000; // bloqueo tras 10 minutos sin usar la app
   const K_AUTH = 'dulza-auth', K_LOCK = 'dulza-lockout', K_SESSION = 'dulza-session';
@@ -306,7 +306,46 @@
     }
   }
 
+  /* ---------- Cambiar el usuario (Ajustes → Seguridad) ---------- */
+  const cap = (u) => (u ? u[0].toUpperCase() + u.slice(1) : '');
+  function changeUser() {
+    if (cloudLinked()) {
+      // con la nube, el usuario es el de la cuenta compartida: cambiarlo solo aquí rompería la entrada
+      return D.alert('Tu usuario viene de la nube', 'Con los datos compartidos activados, tu usuario es el de tu cuenta de Dulza. Para usar otro nombre, desconecta este dispositivo en «Datos compartidos» y cámbialo aquí.');
+    }
+    const sh = D.sheet.open({
+      title: 'Cambiar usuario',
+      form: true,
+      size: 'large',
+      right: { label: 'Guardar', onClick: () => save() },
+      body: `<div class="fields">
+          <label class="field"><span>Usuario nuevo</span><input name="nuevo" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" value="${esc(cap(record().u))}" data-autofocus data-select-all></label>
+          <label class="field"><span>Tu clave</span><input name="cur" type="password" autocomplete="current-password"></label>
+        </div>
+        <p class="lock__error" id="us-err" role="alert" hidden></p>
+        <p class="form-note">Sin espacios ni símbolos raros: de 3 a 20 letras, números, punto o guion bajo. Tu clave no cambia.</p>`,
+    });
+    const val = (n) => sh.el.querySelector(`[name="${n}"]`).value;
+    const say = (m) => {
+      const p = sh.el.querySelector('#us-err');
+      p.textContent = m;
+      p.hidden = !m;
+    };
+    async function save() {
+      const nuevo = norm(val('nuevo'));
+      if (!/^[a-z0-9._]{3,20}$/.test(nuevo)) return say('El usuario debe tener de 3 a 20 letras, números, punto o guion bajo.');
+      if (!val('cur')) return say('Escribe tu clave para confirmar.');
+      const r0 = record();
+      if (!(await check(r0.u, val('cur'))).ok) return say('La clave no es correcta.');
+      ls.set(K_AUTH, JSON.stringify({ ...r0, u: nuevo, t: Date.now() }));
+      sh.close();
+      D.toast('Usuario cambiado', { icon: 'shield' });
+      D.router.render({ force: true });
+    }
+  }
+
   D.act['auth.change'] = changePassword;
+  D.act['auth.user'] = changeUser;
   D.act['auth.lock'] = lock;
-  D.auth = { gate, lock, unlocked, usingDefault, remember, user: () => record().u, _derive: derive, _sha256: (s) => hex(sha256(enc(s))), _salt: SALT };
+  D.auth = { gate, lock, unlocked, usingDefault, remember, user: () => cap(record().u), _derive: derive, _sha256: (s) => hex(sha256(enc(s))), _salt: SALT };
 })();

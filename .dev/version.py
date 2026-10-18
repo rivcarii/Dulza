@@ -31,4 +31,6 @@ if len(sys.argv) != 2 or not re.fullmatch(r'\d+\.\d+\.\d+', sys.argv[1]):
 v = sys.argv[1]
 sub('sw.js', r"const VERSION = 'dulza-v[\d.]+';", f"const VERSION = 'dulza-v{v}';")
 sub('js/core.js', r"D\.version = '[\d.]+';", f"D.version = '{v}';")
-print(f'Versión {v} en sw.js y js/core.js')
+with open(os.path.join(ROOT, 'version.json'), 'w', encoding='utf-8', newline='') as f:
+    f.write('{"version":"%s"}\n' % v)  # la app lo consulta para saber si hay una versión nueva
+print(f'Versión {v} en sw.js, js/core.js y version.json')

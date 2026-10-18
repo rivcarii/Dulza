@@ -2,7 +2,7 @@
    Guarda la app en el dispositivo para que abra al instante y funcione sin internet.
    IMPORTANTE: cada vez que cambies cualquier archivo y lo vuelvas a publicar, sube el número de VERSION
    para que los dispositivos descarguen la actualización. */
-const VERSION = 'dulza-v1.10.0';
+const VERSION = 'dulza-v1.11.0';
 const FONT_CACHE = 'dulza-fonts';
 const GPT = 'assets/brand/gpt/';
 const pad = (n) => String(n).padStart(2, '0');
@@ -24,6 +24,7 @@ const ASSETS = [
   'js/character.js',
   'js/brand.js',
   'js/ui.js',
+  'js/sound.js',
   'js/demo.js',
   'js/invoice.js',
   'js/forms.js',
@@ -38,7 +39,6 @@ const ASSETS = [
   'js/views/reportes.js',
   'js/views/ajustes.js',
   'js/auth.js',
-  'js/drive.js',
   'js/onboarding.js',
   'js/app.js',
   'assets/favicon-64.png',
@@ -118,6 +118,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   if (url.origin !== self.location.origin) return;
+  // version.json siempre sale a internet: es lo que le dice a la app que hay una versión nueva
+  if (url.pathname.endsWith('/version.json')) return;
 
   // Abrir la app (cualquier ruta): siempre el index guardado
   if (req.mode === 'navigate') {

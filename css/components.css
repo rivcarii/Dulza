@@ -227,23 +227,58 @@
   text-align: right;
   color: var(--ink);
 }
+/* Campo de texto: etiqueta arriba y valor debajo, ambos alineados a la izquierda y con el mismo aire por los cuatro lados.
+   Así todas las filas miden igual y los textos no se pegan a un borde ni quedan sueltos al otro lado de la tarjeta. */
+.field:has(> input:not([type="checkbox"], [type="radio"], [type="color"], [type="file"]), > select) {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 2px;
+  min-height: 66px;
+  padding: 10px 18px 8px;
+}
+.field:has(> input:not([type="checkbox"], [type="radio"], [type="color"], [type="file"]), > select) > span:first-child {
+  flex: none;
+  max-width: none;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--ink-2);
+  line-height: 1.2;
+}
+.field:has(> input:not([type="checkbox"], [type="radio"], [type="color"], [type="file"]), > select) > :is(input, select) {
+  flex: none;
+  width: 100%;
+  height: 32px;
+  padding: 0;
+  text-align: left;
+  text-align-last: left;
+  font-size: 1.02rem;
+  line-height: 32px;
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--ink-3); opacity: 1; }
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; }
+.field:focus-within > span:first-child { color: var(--brand-ink); }
 .field select {
-  padding-right: 20px;
-  text-align-last: right;
+  padding-right: 24px !important;
   cursor: pointer;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2384707a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 9.500 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 0 center / 14px;
 }
 .field input[type="date"] { min-width: 0; }
-.field--area { display: block; padding: 12px 16px; }
-.field--area > span:first-child { display: block; max-width: none; margin-bottom: 4px; font-size: 0.82rem; color: var(--ink-2); }
-.field--area textarea { width: 100%; min-height: 84px; border: 0; background: transparent; color: var(--ink); line-height: 1.4; }
+.field--area { display: block; padding: 10px 18px 12px; }
+.field--area > span:first-child { display: block; max-width: none; margin-bottom: 4px; font-size: 0.78rem; font-weight: 650; letter-spacing: 0.01em; color: var(--ink-2); }
+.field--area textarea { width: 100%; min-height: 84px; padding: 0; border: 0; background: transparent; color: var(--ink); line-height: 1.4; resize: vertical; font-size: 1.02rem; }
 .field--link { cursor: pointer; width: 100%; text-align: left; }
-.field--link .field__val { flex: 1; min-width: 0; text-align: right; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Filas que abren una lista (Cliente, Proveedor): mismo formato que los campos de texto, con la flecha a la derecha */
+.field.field--link { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-content: center; min-height: 66px; padding: 10px 18px 8px; }
+.field--link > span:first-child { grid-column: 1; grid-row: 1; max-width: none; font-size: 0.78rem; font-weight: 650; letter-spacing: 0.01em; color: var(--ink-2); line-height: 1.2; margin-bottom: 2px; }
+.field--link .field__val { grid-column: 1; grid-row: 2; min-width: 0; text-align: left; font-size: 1.02rem; line-height: 32px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.field--link > .i { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
 .field--link .field__val.is-empty { color: var(--ink-3); }
 .field--link .i { width: 1.05rem; height: 1.05rem; color: var(--ink-3); }
 .field--link:active { background: var(--fill); }
 .field--tall input { text-align: left; }
-.field--big input { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.03em; height: 64px; }
+.field.field--big > input { font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em; height: 48px; line-height: 48px; }
 .field--prefix { gap: 8px; }
 .field--prefix > .field__pre { color: var(--ink-2); font-weight: 600; }
 .field__sw { display: flex; align-items: center; justify-content: flex-end; flex: 1; gap: 10px; }
