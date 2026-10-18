@@ -388,8 +388,8 @@
 .pick-card__emoji { font-size: 1.9rem; line-height: 1; }
 .pick-card__name { font-weight: 650; font-size: 0.95rem; line-height: 1.2; }
 .pick-card__price { color: var(--ink-2); font-size: 0.86rem; font-variant-numeric: tabular-nums; }
-.pick-card__qty { position: absolute; top: 8px; right: 8px; min-width: 26px; height: 26px; padding: 0 8px; border-radius: 999px; background: var(--brand-fill); color: var(--on-brand); font-weight: 700; font-size: 0.82rem; display: grid; place-items: center; transform: scale(0); transition: transform 320ms var(--spring-bounce); }
-.pick-card[data-qty]:not([data-qty="0"]) .pick-card__qty { transform: scale(1); }
+.pick-card__qty { position: absolute; top: 8px; right: 8px; min-width: 26px; height: 26px; padding: 0 8px; border-radius: 999px; background: var(--brand-fill); color: var(--on-brand); font-weight: 700; font-size: 0.82rem; display: grid; place-items: center; transform: scale(0.6); opacity: 0; transition: transform 280ms var(--spring-bounce), opacity 140ms var(--ease-out); }
+.pick-card[data-qty]:not([data-qty="0"]) .pick-card__qty { transform: scale(1); opacity: 1; }
 .pick-card__dec { position: absolute; bottom: 8px; right: 8px; z-index: 2; }
 /* Todo el recuadro del postre es el botón de «agregar uno»; el contador no estorba y el «−» queda encima */
 .pick-card__hit { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; border-radius: inherit; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }

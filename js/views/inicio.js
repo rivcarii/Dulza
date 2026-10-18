@@ -198,9 +198,21 @@
     $('#chart-readout').innerHTML = readout(data[i], data);
     D.haptic(5);
   });
+  /* Cambio de periodo: se repinta y se anima desde lo anterior, para que la píldora se deslice y las cifras entren suave */
   D.seg['inicio.kpi'] = (v) => {
+    const from = ['month', 'prev', 'all'].indexOf(st.kpi || 'month');
     st.kpi = v;
     D.router.render({ force: true });
+    const seg = $('[data-seg="inicio.kpi"]');
+    if (!seg) return;
+    const to = seg.style.getPropertyValue('--i');
+    if (D.reduceMotion()) return;
+    seg.style.setProperty('--i', from);
+    void seg.offsetWidth;
+    seg.style.setProperty('--i', to);
+    $$('.kpis .kpi, .c-top').forEach((el, i) =>
+      el.animate([{ opacity: 0.35, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 240, delay: i * 30, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'backwards' })
+    );
   };
   D.seg['inicio.range'] = (v) => {
     st.range = v;
