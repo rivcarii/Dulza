@@ -64,16 +64,18 @@
     render() {
       const S = D.data.settings;
       const t = D.today();
-      const m0 = D.monthStart(t);
       const prev = D.addMonths(t, -1);
+      // periodo de las tarjetas: este mes, el mes pasado o todo el historial
+      const [m0, m1] = st.kpi === 'prev' ? [D.monthStart(prev), D.monthEnd(prev)] : st.kpi === 'all' ? ['0000-01-01', '9999-12-31'] : [D.monthStart(t), t];
       const sales = D.data.sales;
-      const monthSales = sales.filter((s) => s.date >= m0 && s.date <= t);
+      const monthSales = sales.filter((s) => s.date >= m0 && s.date <= m1);
       const prevSales = sales.filter((s) => s.date >= D.monthStart(prev) && s.date <= D.monthEnd(prev));
       const vMonth = sumBy(monthSales, D.sale.total);
       const vPrev = sumBy(prevSales, D.sale.total);
       const profit = sumBy(monthSales, D.sale.profit);
-      const collected = sumBy(sales, (s) => sumBy((s.payments || []).filter((p) => p.date >= m0 && p.date <= t), (p) => p.amount));
-      const bought = sumBy(D.data.purchases.filter((p) => p.date >= m0 && p.date <= t), D.purchase.total);
+      const collected = sumBy(sales, (s) => sumBy((s.payments || []).filter((p) => p.date >= m0 && p.date <= m1), (p) => p.amount));
+      const bought = sumBy(D.data.purchases.filter((p) => p.date >= m0 && p.date <= m1), D.purchase.total);
+      const per = { month: 'este mes', prev: 'el mes pasado', all: 'en total' }[st.kpi || 'month'];
       const recv = D.q.receivables();
       const recvTotal = sumBy(recv, D.sale.balance);
       const over = recv.filter((s) => D.sale.status(s) === 'overdue');
@@ -120,12 +122,13 @@
         delta === null
           ? '<span class="delta delta--flat">Primer mes</span>'
           : `<span class="delta ${delta > 0.5 ? 'delta--up' : delta < -0.5 ? 'delta--down' : 'delta--flat'}">${delta > 0.5 ? '▲' : delta < -0.5 ? '▼' : '='} ${Math.abs(delta) > 999 ? '999+' : Math.abs(Math.round(delta))}%</span> vs. mes pasado`;
-      const kpis = `<div class="kpis">
-          ${kpi('receipt', 'Ventas', D.moneyC(vMonth), deltaChip)}
-          ${kpi('coin', 'Cobrado', D.moneyC(collected), 'Dinero recibido este mes')}
-          ${kpi('cart', 'Compras', D.moneyC(bought), bought > 0 ? 'Insumos este mes' : 'Sin compras aún')}
+      const kpis = `<div class="kpiwrap"><div class="kpi-seg" data-rise>${D.ui.seg('inicio.kpi', [['month', 'Este mes'], ['prev', 'Mes pasado'], ['all', 'Todo']], st.kpi || 'month')}</div>
+        <div class="kpis">
+          ${kpi('receipt', 'Ventas', D.moneyC(vMonth), (st.kpi || 'month') === 'month' ? deltaChip : `${D.plural(monthSales.length, 'venta', 'ventas')} ${per}`)}
+          ${kpi('coin', 'Cobrado', D.moneyC(collected), `Dinero recibido ${per}`)}
+          ${kpi('cart', 'Compras', D.moneyC(bought), bought > 0 ? `Insumos ${per}` : 'Sin compras en el periodo')}
           ${kpi('trend', 'Ganancia', D.moneyC(profit), 'Estimada: ventas − costos')}
-        </div>`;
+        </div></div>`;
 
       const quick = `<div class="quick" data-rise>
           <button class="quick__btn" data-act="sale.new"><span class="quick__ic">${D.icon('receipt')}</span>Nueva venta</button>
@@ -195,6 +198,10 @@
     $('#chart-readout').innerHTML = readout(data[i], data);
     D.haptic(5);
   });
+  D.seg['inicio.kpi'] = (v) => {
+    st.kpi = v;
+    D.router.render({ force: true });
+  };
   D.seg['inicio.range'] = (v) => {
     st.range = v;
     const data = series(v);
