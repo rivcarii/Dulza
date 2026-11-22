@@ -411,7 +411,7 @@
     txt(c, '¡Antójate!', 780, 352, { font: TITAN(44), color: '#5A2E1B' });
     cta(c, 590, 400, 380, 76, ctaLines(false), 30, { border: 5, off: 8, icon: 38 });
     if (menuClasico()) [397, 625, 850].forEach((x, i) => menuCard(c, x, 848, 214, ORDEN[i], { nameS: 27, rowS: 25, lh: 1.4 }));
-    else listaPrecios(c, 380, 500, 680, 560, { max: 36 });
+    else listaPrecios(c, 470, 500, 590, 560, { max: 34 }); // a la derecha de Dulce, sin taparla
   }
 
   async function drawMenuV(c) {
@@ -535,7 +535,8 @@
     const frase = F ? F.frase : FRASES[seed % FRASES.length];
     const [dib, dulce, band] = await Promise.all([
       dibujoPostre(p.emoji || D.DEFAULT_GLYPH),
-      img(F ? `assets/brand/gpt/temporadas/${pz.t}/busto.png` : 'assets/brand/gpt/v3/busto.png').catch(() => null),
+      // Dulce de cuerpo entero (el busto termina recortado en la cintura y el corte se notaba)
+      img(F ? `assets/brand/gpt/temporadas/${pz.t}/personaje.png` : 'assets/brand/gpt/v3/personaje.png').catch(() => null),
       img(`${BASE}bandejas/${pz.t || 'normal'}.png`).catch(() => null),
     ]);
     fillBg(c, W, H, bg[0], bg[1]);
@@ -577,9 +578,10 @@
     });
     // Dulce presentando (abajo a la izquierda)
     if (dulce) {
-      const dh = v ? 470 : 430;
+      // de pie junto a la bandeja, con los pies justo encima de los precios
+      const dh = v ? 640 : 560;
       const dw = (dulce.width / dulce.height) * dh;
-      c.drawImage(dulce, -10, v ? 1036 : H - dh - 120, dw, dh); // en la historia, el corte de abajo queda detrás de los precios
+      c.drawImage(dulce, v ? 6 : 16, (v ? 1486 : 900) - dh, dw, dh);
     }
 
     // textos
