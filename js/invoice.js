@@ -229,9 +229,6 @@
   const FONT = 'Nunito, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
   const DISP = '"Titan One", "Arial Rounded MT Bold", ' + FONT;
   const fontD = (px) => `400 ${px}px ${DISP}`;
-  const MONO = '"Courier New", Courier, "Liberation Mono", ui-monospace, Menlo, Consolas, monospace';
-  const mono = (w, px) => `${w} ${px}px ${MONO}`;
-  const W = 620, M = 30, PAD = 62, RX = W - PAD, CW = RX - PAD, TOP = 28; // tiquete angosto: el papel va de M a W-M
 
   function rr(ctx, x, y, w, h, r) {
     r = Math.min(r, w / 2, h / 2);
@@ -263,12 +260,15 @@
   }
   const font = (w, px) => `${w} ${px}px ${FONT}`;
 
-  /* Tiquete de supermercado: papel angosto con bordes dentados, logo centrado arriba, líneas punteadas, texto de máquina,
-     totales a la derecha, sello de estado, código de barras y una marca de agua de postres translúcidos en todo el papel.
-     paint() solo escribe el contenido (con dry=true únicamente mide); el papel y la marca de agua los pone render(). */
-  const MINH = 640;
+  /* Factura de marca (v1.33): tarjeta blanca de esquinas redondeadas sobre un fondo suave; encabezado de color con el
+     logo y el número, borde de glaseado que gotea; cajas de cliente y condiciones; tabla de postres con su dibujo;
+     totales con el saldo resaltado; sello de estado; y un cierre con Dulce y el agradecimiento. En festividad toma
+     los colores, el logo, Dulce y los adornos de la fecha.
+     paint() dibuja el contenido (con dry=true solo mide la altura); render() pone el fondo y la tarjeta. */
+  const W = 820, PAD = 26, TOP = 26, L = PAD + 40, R = W - PAD - 40, CW = R - L, MINH = 900;
   const STATUS_LABEL = { paid: 'Pagada', pending: 'Por cobrar', partial: 'Abonada', overdue: 'Vencida' };
   const STAMP = { paid: 'PAGADA', pending: 'PENDIENTE', partial: 'ABONADA', overdue: 'VENCIDA' };
+  const TONE = { paid: '#178a55', pending: '#2f6fdb', partial: '#a15c00', overdue: '#c8283d' };
   // la mascota cambia de expresión según el estado de la factura
   const MOOD = D.SALE_MOOD;
   const THANKS = { paid: '¡Gracias por tu pago!', pending: '¡Gracias por tu compra!', partial: '¡Gracias por tu abono!', overdue: '¡Gracias por tu compra!' };
@@ -277,36 +277,19 @@
     const d = D.parseDate(iso);
     return `${d.getDate()} ${D.MONTHS_L[d.getMonth()]} ${d.getFullYear()}`;
   };
-  // postres de la marca de agua (siempre los mismos, más los que lleva la venta)
-  const WATERMARK = ['02', '06', '11', '15', '19', '24', '29', '34', '40', '47'].map((n) => 'p:' + n);
+  const N = (w, px) => `${w} ${px}px ${FONT}`;
+  // alto del encabezado según lo que lleve (se usa al medir y al dibujar)
+  const headerLines = (S) => [S.tagline, S.owner, S.phone, S.address].filter(Boolean).slice(0, 4);
 
-  /* Contorno del papel con dientes arriba y abajo */
-  function paperPath(ctx, top, bottom) {
-    const x0 = M, x1 = W - M, t = 9, n = Math.round((x1 - x0) / 16), w = (x1 - x0) / n;
-    ctx.beginPath();
-    ctx.moveTo(x0, top + t);
-    for (let i = 0; i < n; i++) {
-      ctx.lineTo(x0 + w * (i + 0.5), top);
-      ctx.lineTo(x0 + w * (i + 1), top + t);
-    }
-    ctx.lineTo(x1, bottom - t);
-    for (let i = n; i > 0; i--) {
-      ctx.lineTo(x0 + w * (i - 0.5), bottom);
-      ctx.lineTo(x0 + w * (i - 1), bottom - t);
-    }
-    ctx.closePath();
-  }
-
-  /* Dibuja el contenido del tiquete empezando en TOP. Devuelve la y donde termina. */
   function paint(ctx, sale, A, dry) {
     const S = D.data.settings;
-    const K = A.colors;
-    const ink = '#241820', ink2 = '#5f4f58', ink3 = '#8f7f88', dash = '#b3a3ac';
+    const C = D.color;
+    const { pri, sec, inkB, soft, soft2 } = A.pal;
+    const ink = '#2a1a23', ink2 = '#6b5762', ink3 = '#8f7f88', line = '#efe3ea';
     const total = D.sale.total(sale), paid = D.sale.paid(sale), bal = D.sale.balance(sale);
     const st = D.sale.status(sale);
-    const tone = { paid: '#178a55', pending: '#2f6fdb', partial: '#a15c00', overdue: '#c8283d' }[st];
+    const tone = TONE[st];
     const customer = D.sale.customer(sale);
-    const cxm = W / 2;
     const text = (t, x, yy, f, c, align = 'left', ls = 0) => {
       ctx.font = f;
       if (dry) return;
@@ -316,312 +299,367 @@
       ctx.fillText(t, x, yy);
       try { ctx.letterSpacing = '0px'; } catch (e) {}
     };
+    const box = (x, yy, w, h, r, fill, stroke) => {
+      if (dry) return;
+      rr(ctx, x, yy, w, h, r);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      if (stroke) {
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    };
+    const pill = (t, x, yy, f, fill, color, align = 'left') => {
+      ctx.font = f;
+      const w = ctx.measureText(t).width + 30;
+      const x0 = align === 'right' ? x - w : x;
+      box(x0, yy, w, 34, 17, fill);
+      text(t, x0 + w / 2, yy + 23, f, color, 'center', 1);
+      return w;
+    };
     ctx.textBaseline = 'alphabetic';
     try { ctx.letterSpacing = '0px'; } catch (e) {}
-    let y = TOP + 40;
 
-    const rule = (kind = 'dash') => {
-      if (!dry) {
-        ctx.save();
-        ctx.strokeStyle = dash;
-        ctx.lineWidth = 2;
-        const line = (yy) => { ctx.beginPath(); ctx.moveTo(PAD, yy); ctx.lineTo(RX, yy); ctx.stroke(); };
-        if (kind === 'dash') { ctx.setLineDash([8, 6]); line(y); }
-        else { line(y - 2); line(y + 2); }
-        ctx.restore();
+    /* ---- Encabezado de color ---- */
+    const hl = headerLines(S);
+    const logoH = A.brandLogo ? 104 : 84;
+    const leftH = logoH + 14 + hl.length * 23;
+    const hh = Math.max(176, leftH) + 56;
+    const y0 = TOP;
+    if (!dry) {
+      const g = ctx.createLinearGradient(PAD, 0, W - PAD, 0);
+      g.addColorStop(0, A.pal.hdrA);
+      g.addColorStop(1, A.pal.hdrB);
+      ctx.fillStyle = g;
+      ctx.fillRect(PAD, y0, W - 2 * PAD, hh);
+      // borde de glaseado que gotea
+      let k = 0;
+      for (let x = PAD + 10; x < W - PAD + 20; x += 46, k++) {
+        const r = 15 + ((k * 7) % 3) * 4, d = 10 + ((k * 5) % 4) * 7;
+        ctx.beginPath();
+        ctx.arc(x, y0 + hh, r, 0, Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(x - 6, y0 + hh, 12, d + 6, 6) : ctx.rect(x - 6, y0 + hh, 12, d + 6);
+        if (k % 3 === 1) ctx.fill();
       }
-      y += 24;
-    };
-    const kv = (label, val, { bold = false, color = ink, size = 16 } = {}) => {
-      text(label, PAD, y, mono(500, size), ink2);
-      text(val, RX, y, mono(bold ? 800 : 700, size), color, 'right');
-      y += size + 11;
-    };
-
-    /* ---- Logo arriba y centrado, y los datos del negocio ---- */
+      // puntitos de confeti y, en festividad, sus adornos
+      ctx.save();
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = '#ffffff';
+      for (let i = 0; i < 26; i++) {
+        const x = PAD + 20 + ((i * 97) % (W - 2 * PAD - 40)), yy = y0 + 14 + ((i * 53) % (hh - 30));
+        ctx.beginPath();
+        ctx.arc(x, yy, 2 + (i % 3), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      A.deco.slice(0, 3).forEach((im, i) => {
+        const s = Math.min(46 / im.naturalWidth, 46 / im.naturalHeight);
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        ctx.translate(L + 300 + i * 66, y0 + 44 + (i % 2) * 26); // entre el logo y el número, sin pisar textos
+        ctx.rotate((i % 2 ? 1 : -1) * 0.22);
+        ctx.drawImage(im, (-im.naturalWidth * s) / 2, (-im.naturalHeight * s) / 2, im.naturalWidth * s, im.naturalHeight * s);
+        ctx.restore();
+      });
+    }
+    // logo y datos del negocio
+    let ly = y0 + 28;
     if (A.brandLogo) {
-      const k = Math.min(250 / A.brandLogo.naturalWidth, 170 / A.brandLogo.naturalHeight);
-      const bw = A.brandLogo.naturalWidth * k, bh = A.brandLogo.naturalHeight * k;
-      if (!dry) ctx.drawImage(A.brandLogo, cxm - bw / 2, y - 14, bw, bh);
-      y += bh + 6;
+      const k2 = Math.min(250 / A.brandLogo.naturalWidth, logoH / A.brandLogo.naturalHeight);
+      if (!dry) ctx.drawImage(A.brandLogo, L - 6, ly, A.brandLogo.naturalWidth * k2, A.brandLogo.naturalHeight * k2);
     } else {
       if (!dry) {
         ctx.save();
-        rr(ctx, cxm - 40, y - 14, 80, 80, 22);
+        rr(ctx, L, ly, 84, 84, 24);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
         ctx.clip();
-        ctx.drawImage(A.logo, cxm - 40, y - 14, 80, 80);
+        ctx.drawImage(A.logo, L, ly, 84, 84);
         ctx.restore();
       }
-      y += 94;
-      text(S.name, cxm, y, fontD(32), K.ink, 'center');
-      y += 12;
+      ctx.font = fontD(32);
+      text(S.name, L + 100, ly + 54, fontD(32), '#ffffff');
     }
-    y += 14;
-    [S.tagline, S.owner, S.phone, S.address].filter(Boolean).forEach((l, k) => {
-      ctx.font = mono(k === 0 ? 800 : 500, 15);
-      wrap(ctx, l, CW, 2).forEach((s) => {
-        text(s, cxm, y, mono(k === 0 ? 800 : 500, 15), k === 0 ? ink : ink2, 'center');
-        y += 21;
-      });
+    ly += logoH + 14;
+    hl.forEach((l, i) => {
+      ctx.font = N(i === 0 ? 800 : 600, 16);
+      const s = wrap(ctx, l, CW * 0.52, 1)[0] || '';
+      text(s, L, ly + 16, N(i === 0 ? 800 : 600, 16), 'rgba(255,255,255,0.94)');
+      ly += 23;
     });
-    y += 6;
-    rule();
-
-    /* ---- Documento ---- */
-    text('FACTURA DE VENTA', cxm, y, mono(800, 14), ink2, 'center', 3);
-    y += 42;
-    text(sale.number, cxm, y, fontD(40), K.ink, 'center');
-    y += 28;
+    // número, fecha y estado
+    let ry = y0 + 46;
+    text('FACTURA DE VENTA', R, ry, N(900, 14), 'rgba(255,255,255,0.88)', 'right', 3);
+    ry += 54;
+    text(sale.number, R, ry, fontD(46), '#ffffff', 'right');
+    ry += 32;
     const hora = sale.at ? new Date(sale.at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
-    text(fdate(sale.date) + (hora ? '  ·  ' + hora : ''), cxm, y, mono(700, 15), ink2, 'center');
-    y += 20;
-    rule();
-    ctx.font = mono(800, 16);
-    const nm = wrap(ctx, D.sale.customerName(sale), CW - 110, 2);
-    text('CLIENTE', PAD, y, mono(500, 16), ink2);
-    nm.forEach((l, i) => text(l, RX, y + i * 21, mono(800, 16), ink, 'right'));
-    y += nm.length * 21 + 8;
-    if (customer && customer.phone) kv('WhatsApp', customer.phone);
-    kv('Plazo', sale.term === 0 ? 'Contado' : `${sale.term} días`);
-    if (sale.term > 0) kv('Vence', fdate(sale.due), { color: bal > 0 && sale.due < D.today() ? '#c8283d' : ink });
-    kv('Estado', STATUS_LABEL[st], { color: tone, bold: true });
-    y -= 4;
-    rule('double');
+    text(fdate(sale.date) + (hora ? '  ·  ' + hora : ''), R, ry, N(700, 17), 'rgba(255,255,255,0.94)', 'right');
+    ry += 16;
+    pill(STATUS_LABEL[st].toUpperCase(), R, ry, N(900, 14), '#ffffff', tone, 'right');
 
-    /* ---- Detalle ---- */
-    text('CANT', PAD, y, mono(800, 13), ink3, 'left', 1);
-    text('DESCRIPCIÓN', PAD + 92, y, mono(800, 13), ink3, 'left', 1);
-    text('VALOR', RX, y, mono(800, 13), ink3, 'right', 1);
-    y += 12;
-    rule();
-    y -= 4;
-    const dx = PAD + 92, descW = RX - 128 - dx;
-    sale.items.forEach((it) => {
-      ctx.font = mono(700, 17);
-      const nl = wrap(ctx, it.name, descW, 2);
-      const sub = it.qty > 1;
-      const rowH = Math.max(54, 20 + nl.length * 22 + (sub ? 20 : 0));
+    let y = y0 + hh + 44;
+
+    /* ---- Cliente y condiciones ---- */
+    const bw = (CW - 20) / 2;
+    ctx.font = N(800, 21);
+    const nm = wrap(ctx, D.sale.customerName(sale), bw - 44, 2);
+    const cRows = [['Plazo', sale.term === 0 ? 'Contado' : `${sale.term} días`, ink]];
+    if (sale.term > 0) cRows.push(['Vence', fdate(sale.due), bal > 0 && sale.due < D.today() ? '#c8283d' : ink]);
+    cRows.push(['Estado', STATUS_LABEL[st], tone]);
+    const h1 = 46 + nm.length * 27 + (customer && customer.phone ? 26 : 0);
+    const h2 = 46 + cRows.length * 28;
+    const bh = Math.max(h1, h2) + 16;
+    box(L, y, bw, bh, 20, soft);
+    box(L + bw + 20, y, bw, bh, 20, soft);
+    text('CLIENTE', L + 22, y + 32, N(900, 13), inkB, 'left', 2);
+    nm.forEach((l, i) => text(l, L + 22, y + 62 + i * 27, N(800, 21), ink));
+    if (customer && customer.phone) text(customer.phone, L + 22, y + 62 + nm.length * 27, N(600, 16), ink2);
+    const x2 = L + bw + 42, xr2 = L + 2 * bw + 20 - 22;
+    text('CONDICIONES', x2, y + 32, N(900, 13), inkB, 'left', 2);
+    cRows.forEach(([k, v, c], i) => {
+      text(k, x2, y + 62 + i * 28, N(600, 16), ink2);
+      text(v, xr2, y + 62 + i * 28, N(800, 17), c, 'right');
+    });
+    y += bh + 30;
+
+    /* ---- Postres ---- */
+    const cQ = R - 300, cP = R - 150, cT = R - 18;
+    box(L, y, CW, 44, 14, soft2);
+    text('POSTRE', L + 18, y + 28, N(900, 13), inkB, 'left', 2);
+    text('CANT.', cQ, y + 28, N(900, 13), inkB, 'center', 2);
+    text('PRECIO', cP, y + 28, N(900, 13), inkB, 'right', 2);
+    text('TOTAL', cT, y + 28, N(900, 13), inkB, 'right', 2);
+    y += 52;
+    const nx = L + 78, nw = cQ - 50 - nx;
+    sale.items.forEach((it, i) => {
+      ctx.font = N(800, 18);
+      const nl = wrap(ctx, it.name, nw, 2);
+      const rowH = Math.max(66, 26 + nl.length * 24);
+      if (i % 2 === 1) box(L, y, CW, rowH, 14, '#fcf7f9');
       const mid = y + rowH / 2;
-      text(`${it.qty}x`, PAD, y + 24, mono(800, 18), ink);
       const g = A.glyphs && A.glyphs[it.emoji || D.DEFAULT_GLYPH];
       if (g && !dry) {
-        const k = Math.min(40 / g.naturalWidth, 40 / g.naturalHeight);
-        ctx.drawImage(g, PAD + 44 - (g.naturalWidth * k) / 2, mid - (g.naturalHeight * k) / 2, g.naturalWidth * k, g.naturalHeight * k);
-      } else if (!g && it.emoji && !D.isPostre(it.emoji)) text(it.emoji, PAD + 44, mid + 10, font(400, 28), ink, 'center');
-      nl.forEach((l, i) => text(l, dx, y + 24 + i * 22, mono(700, 17), ink));
-      if (sub) text(`${D.money(it.price)} c/u`, dx, y + 24 + nl.length * 22 - 2, mono(500, 13), ink3);
-      text(D.money(it.qty * it.price), RX, y + 24, mono(800, 17), ink, 'right');
+        const k = Math.min(46 / g.naturalWidth, 46 / g.naturalHeight);
+        ctx.drawImage(g, L + 40 - (g.naturalWidth * k) / 2, mid - (g.naturalHeight * k) / 2, g.naturalWidth * k, g.naturalHeight * k);
+      } else if (!g && it.emoji && !D.isPostre(it.emoji)) text(it.emoji, L + 40, mid + 11, font(400, 30), ink, 'center');
+      const ty = mid - ((nl.length - 1) * 24) / 2 + 7;
+      nl.forEach((l, j) => text(l, nx, ty + j * 24, N(800, 18), ink));
+      text(String(it.qty), cQ, mid + 7, N(800, 18), ink, 'center');
+      text(D.money(it.price), cP, mid + 7, N(600, 17), ink2, 'right');
+      text(D.money(it.qty * it.price), cT, mid + 7, N(800, 18), ink, 'right');
       y += rowH;
     });
-    rule();
-
-    /* ---- Totales ---- */
-    kv('SUBTOTAL', D.money(D.sale.subtotal(sale)));
-    if (sale.discount > 0) kv('DESCUENTO', '− ' + D.money(sale.discount), { color: '#c8283d' });
-    y += 2;
-    rule('double');
-    text('TOTAL', PAD, y + 8, mono(800, 26), ink);
-    text(D.money(total), RX, y + 8, mono(800, 30), K.ink, 'right');
-    y += 42;
-    if (paid > 0) kv('ABONADO', D.money(paid), { color: '#178a55' });
-    if (bal > 0) {
-      text('SALDO PENDIENTE', PAD, y + 2, mono(800, 17), tone);
-      text(D.money(bal), RX, y + 2, mono(800, 22), tone, 'right');
-      y += 36;
-    }
-
-    /* ---- Sello de estado ---- */
-    y += 20;
     if (!dry) {
-      ctx.save();
-      ctx.translate(cxm, y + 34);
-      ctx.rotate(-0.1);
-      ctx.font = fontD(30);
-      const tw = ctx.measureText(STAMP[st]).width;
-      ctx.strokeStyle = tone;
-      ctx.fillStyle = tone;
-      ctx.globalAlpha = 0.88;
-      ctx.lineWidth = 4.5;
-      rr(ctx, -tw / 2 - 24, -32, tw + 48, 64, 15);
+      ctx.strokeStyle = line;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(L, y + 8);
+      ctx.lineTo(R, y + 8);
       ctx.stroke();
-      ctx.lineWidth = 1.5;
-      rr(ctx, -tw / 2 - 18, -26, tw + 36, 52, 10);
-      ctx.stroke();
-      ctx.textAlign = 'center';
-      ctx.fillText(STAMP[st], 0, 11);
-      ctx.restore();
     }
-    y += 84;
+    y += 30;
 
-    /* ---- Pagos y observaciones ---- */
+    /* ---- Totales (derecha) y sello / pagos (izquierda) ---- */
+    const tw = 370, tx = R - tw;
+    const tRows = [['Subtotal', D.money(D.sale.subtotal(sale)), ink]];
+    if (sale.discount > 0) tRows.push(['Descuento', '− ' + D.money(sale.discount), '#c8283d']);
+    const th = 28 + tRows.length * 30 + 66 + (paid > 0 ? 30 : 0) + (bal > 0 ? 56 : 0) + 12;
+    box(tx, y, tw, th, 22, soft);
+    let ty = y + 36;
+    tRows.forEach(([k, v, c]) => {
+      text(k, tx + 24, ty, N(600, 17), ink2);
+      text(v, tx + tw - 24, ty, N(800, 18), c, 'right');
+      ty += 30;
+    });
+    if (!dry) {
+      ctx.strokeStyle = C.mix(pri, '#ffffff', 0.7);
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(tx + 24, ty - 10);
+      ctx.lineTo(tx + tw - 24, ty - 10);
+      ctx.stroke();
+    }
+    text('TOTAL', tx + 24, ty + 34, N(900, 20), ink, 'left', 2);
+    text(D.money(total), tx + tw - 24, ty + 38, fontD(38), inkB, 'right');
+    ty += 66;
+    if (paid > 0) {
+      text('Abonado', tx + 24, ty, N(600, 17), ink2);
+      text(D.money(paid), tx + tw - 24, ty, N(800, 18), '#178a55', 'right');
+      ty += 30;
+    }
+    if (bal > 0) {
+      box(tx + 14, ty - 8, tw - 28, 46, 23, tone);
+      text('SALDO PENDIENTE', tx + 34, ty + 22, N(900, 15), '#ffffff', 'left', 1);
+      text(D.money(bal), tx + tw - 34, ty + 23, N(900, 21), '#ffffff', 'right');
+    }
+    // izquierda: pagos recibidos o el sello del estado
+    const lw = CW - tw - 30;
+    let ly2 = y + 8;
     if (sale.payments && sale.payments.length) {
-      rule();
-      text('PAGOS RECIBIDOS', PAD, y, mono(800, 13), ink3, 'left', 1);
-      y += 24;
+      text('PAGOS RECIBIDOS', L, ly2 + 14, N(900, 13), inkB, 'left', 2);
+      ly2 += 40;
       sale.payments
         .slice()
         .sort((a, b) => a.date.localeCompare(b.date))
+        .slice(-5)
         .forEach((p) => {
-          text(`${D.fmtDate(p.date)}  ${p.method}`, PAD, y, mono(500, 15), ink2);
-          text(D.money(p.amount), RX, y, mono(800, 16), ink, 'right');
-          y += 26;
+          ctx.font = N(600, 15);
+          text(`${D.fmtDate(p.date)} · ${wrap(ctx, p.method || '', lw - 150, 1)[0] || ''}`, L, ly2, N(600, 15), ink2);
+          text(D.money(p.amount), L + lw, ly2, N(800, 16), ink, 'right');
+          ly2 += 27;
         });
-      y -= 6;
+    } else if (!dry) {
+      ctx.save();
+      ctx.translate(L + lw / 2, y + th / 2);
+      ctx.rotate(-0.12);
+      ctx.font = fontD(32);
+      const sw = ctx.measureText(STAMP[st]).width;
+      ctx.strokeStyle = tone;
+      ctx.fillStyle = tone;
+      ctx.globalAlpha = 0.85;
+      ctx.lineWidth = 4.5;
+      rr(ctx, -sw / 2 - 26, -34, sw + 52, 68, 16);
+      ctx.stroke();
+      ctx.lineWidth = 1.5;
+      rr(ctx, -sw / 2 - 19, -27, sw + 38, 54, 11);
+      ctx.stroke();
+      ctx.textAlign = 'center';
+      ctx.fillText(STAMP[st], 0, 12);
+      ctx.restore();
     }
-    if (sale.note) {
-      rule();
-      text('NOTA', PAD, y, mono(800, 13), ink3, 'left', 1);
-      y += 22;
-      ctx.font = mono(500, 15);
-      wrap(ctx, sale.note, CW, 4).forEach((l) => {
-        text(l, PAD, y, mono(500, 15), ink);
-        y += 21;
-      });
-      y -= 4;
-    }
-    rule();
+    y += Math.max(th, ly2 - y) + 30;
 
-    /* ---- Cierre: mascota, agradecimiento, condiciones y código de barras ---- */
-    const mw = 118, mh = A.mascot ? mw * ((A.mascot.naturalHeight || 1) / (A.mascot.naturalWidth || 1)) : 0;
-    if (!dry && A.mascot) ctx.drawImage(A.mascot, cxm - mw / 2, y - 6, mw, mh);
-    y += mh + 30;
-    text(THANKS[st], cxm, y, fontD(27), K.ink, 'center');
-    y += 10;
+    /* ---- Nota ---- */
+    if (sale.note) {
+      ctx.font = N(600, 16);
+      const nl = wrap(ctx, sale.note, CW - 44, 4);
+      const nh = 44 + nl.length * 23;
+      box(L, y, CW, nh, 18, '#ffffff', line);
+      text('NOTA', L + 22, y + 30, N(900, 13), inkB, 'left', 2);
+      nl.forEach((l, i) => text(l, L + 22, y + 56 + i * 23, N(600, 16), ink));
+      y += nh + 24;
+    }
+
+    /* ---- Cierre con Dulce ---- */
+    const mx = L + 232; // el texto empieza después de Dulce
+    const fw = R - mx - 22;
+    ctx.font = N(700, 15);
+    const sub = SUBLINE[st] ? wrap(ctx, SUBLINE[st], fw, 2) : [];
+    ctx.font = N(500, 14);
+    const terms = wrap(ctx, S.terms || '', fw, 4);
+    const fh = Math.max(196, 40 + 36 + (A.season ? 32 : 0) + sub.length * 21 + (terms.length ? 12 + terms.length * 20 : 0) + 30);
+    box(L, y, CW, fh, 26, soft2);
+    if (!dry && A.mascot) {
+      // Dulce asoma desde abajo, recortada por el borde de la caja
+      ctx.save();
+      rr(ctx, L, y, CW, fh, 26);
+      ctx.clip();
+      const mh = Math.min(fh + 20, 214);
+      const mw = mh * ((A.mascot.naturalWidth || 1) / (A.mascot.naturalHeight || 1));
+      ctx.drawImage(A.mascot, L + 112 - mw / 2, y + fh - mh + 8, mw, mh);
+      ctx.restore();
+    }
+    let fy = y + 52;
+    text(THANKS[st], mx, fy, fontD(30), inkB);
     if (A.season) {
-      // saludo de la fecha, en el color de la temporada
-      y += 30;
-      text(A.season.saludo, cxm, y, fontD(22), D.color.ensure ? D.color.ensure(A.season.brand, '#fffdfb', 4.5, '#000000') : A.season.brand, 'center');
-      y += 4;
+      fy += 34;
+      text(A.season.saludo, mx, fy, fontD(22), C.ensure(A.season.brand, '#ffffff', 4.5, '#000000'));
     }
-    if (SUBLINE[st]) {
-      y += 22;
-      ctx.font = mono(700, 14);
-      wrap(ctx, SUBLINE[st], CW, 2).forEach((l) => {
-        text(l, cxm, y, mono(700, 14), tone, 'center');
-        y += 20;
-      });
-      y -= 6;
-    }
-    ctx.font = mono(500, 13);
-    const tl = wrap(ctx, S.terms || '', CW, 4);
-    y += 22;
-    tl.forEach((l) => {
-      text(l, cxm, y, mono(500, 13), ink2, 'center');
-      y += 19;
+    sub.forEach((l) => {
+      fy += 25;
+      text(l, mx, fy, N(700, 15), tone);
     });
-    y += 18;
-    if (!dry) {
-      let h = 2166136261;
-      for (const ch of sale.number + sale.id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
-      const rnd = () => ((h = (Math.imul(h, 1664525) + 1013904223) >>> 0) / 4294967296);
-      const bw = CW - 60, x0 = PAD + 30;
-      ctx.fillStyle = ink;
-      for (let x = 0, bar = true; x < bw; bar = !bar) {
-        const w = 2 + Math.floor(rnd() * 4);
-        if (bar) ctx.fillRect(x0 + x, y, Math.min(w, bw - x), 52);
-        x += w;
-      }
-    }
-    y += 52 + 20;
-    text(sale.number.split('').join(' '), cxm, y, mono(700, 13), ink2, 'center', 2);
-    y += 28;
-    text('Comprobante de venta · no es factura electrónica', cxm, y, mono(500, 11.5), ink3, 'center');
-    return y + 4;
+    if (terms.length) fy += 10;
+    terms.forEach((l) => {
+      fy += 20;
+      text(l, mx, fy, N(500, 14), ink2);
+    });
+    y += fh + 26;
+    text(`Comprobante de venta ${sale.number} · no es factura electrónica`, W / 2, y, N(600, 12.5), ink3, 'center');
+    return y + 14;
   }
 
   async function assets(sale) {
     const S = D.data.settings;
     const K = D.theme.colors();
+    const C = D.color;
     try {
-      await Promise.all([document.fonts.load('40px "Titan One"'), document.fonts.load('400 20px Nunito'), document.fonts.load('600 20px Nunito'), document.fonts.load('700 20px Nunito'), document.fonts.load('800 20px Nunito')]);
+      await Promise.all([document.fonts.load('40px "Titan One"'), document.fonts.load('600 20px Nunito'), document.fonts.load('700 20px Nunito'), document.fonts.load('800 20px Nunito'), document.fonts.load('900 20px Nunito')]);
     } catch (e) {}
     const ownLogo = !S.logo && /^dulza$/i.test(String(S.name || '').trim());
     const tokens = Array.from(new Set(((sale && sale.items) || []).map((i) => i.emoji || D.DEFAULT_GLYPH).filter(D.isPostre)));
-    // En temporada, Dulce va con el vestuario de la fecha y los adornos de la fecha decoran el papel
+    // En temporada, Dulce va con el vestuario de la fecha y los adornos de la fecha decoran el encabezado
     const season = D.season ? D.season.current() : null;
     const mood = season ? D.gpt.bust : D.gpt.moods[MOOD[sale ? D.sale.status(sale) : 'pending']] || D.gpt.bust;
-    const marks = Array.from(new Set([...WATERMARK, ...tokens])).slice(0, 14);
     const adornos = D.season ? D.season.adornos(season) : [];
+    const hd = (t) => D.art.srcToImage(`${D.gpt.base}v3/postres-hd/postre-${t.slice(2)}.png`).catch(() => D.art.srcToImage(D.postreUrl(t)));
     const [logo, mascot, brandLogo, ...rest] = await Promise.all([
       D.art.srcToImage(S.logo || D.gpt.url(D.gpt.icon)),
       D.art.srcToImage(S.mascot || D.gpt.url(mood)),
-      ownLogo ? D.art.srcToImage(D.gpt.url(D.gpt.logo)).catch(() => null) : null,
-      ...tokens.map((t) => D.art.srcToImage(D.postreUrl(t)).catch(() => null)),
-      ...marks.map((t) => D.art.srcToImage(D.postreUrl(t)).catch(() => null)),
+      ownLogo ? D.art.srcToImage(D.gpt.url(D.gpt.logoName)).catch(() => null) : null,
+      ...tokens.map((t) => hd(t).catch(() => null)),
       ...adornos.map((u) => D.art.srcToImage(u).catch(() => null)),
     ]);
     const glyphs = rest.slice(0, tokens.length);
-    const deco = rest.slice(tokens.length + marks.length).filter(Boolean);
-    return {
-      colors: K, logo, mascot, brandLogo, season, deco,
-      // marca de agua: en temporada, los adornos de la fecha mezclados con los postres
-      pat: deco.length ? [...deco, ...rest.slice(tokens.length, tokens.length + 4)] : rest.slice(tokens.length, tokens.length + marks.length),
-      glyphs: Object.fromEntries(tokens.map((t, i) => [t, glyphs[i]])),
+    const deco = rest.slice(tokens.length).filter(Boolean);
+    // paleta: la de la marca, o la de la festividad
+    const pri = season ? season.brand : K.brand;
+    const sec = season ? season.accent : K.accent;
+    const pal = {
+      pri,
+      sec,
+      hdrA: C.ensure(C.mix(pri, '#000000', 0.08), '#ffffff', 3.2, '#000000'),
+      hdrB: C.ensure(C.mix(pri, sec, 0.45), '#ffffff', 3.2, '#000000'),
+      inkB: C.ensure(pri, '#ffffff', 4.5, '#000000'),
+      soft: C.mix(pri, '#ffffff', 0.93),
+      soft2: C.mix(pri, '#ffffff', 0.86),
+      page: C.mix(pri, '#ffffff', 0.82),
     };
+    return { colors: K, pal, logo, mascot, brandLogo, season, deco, glyphs: Object.fromEntries(tokens.map((t, i) => [t, glyphs[i]])) };
   }
 
   D.invoice = {
     async render(sale, scale = 2) {
       const A = await assets(sale);
       const probe = document.createElement('canvas').getContext('2d');
-      const H = Math.max(Math.ceil(paint(probe, sale, A, true)) + 34 + TOP, MINH);
-      const bottom = H - TOP; // fin del papel
+      const H = Math.max(Math.ceil(paint(probe, sale, A, true)) + PAD, MINH);
       const c = document.createElement('canvas');
       c.width = W * scale;
       c.height = H * scale;
       const ctx = c.getContext('2d');
       ctx.scale(scale, scale);
-      // fondo suave con el color de la marca y el papel encima, con sombra
-      ctx.fillStyle = A.season ? D.color.mix(A.season.brand, '#ffffff', 0.8) : D.color.mix(A.colors.brand, '#ffffff', 0.86);
+      ctx.imageSmoothingQuality = 'high';
+      // fondo suave del color de la marca (o de la fecha) con confeti, y la tarjeta encima con sombra
+      ctx.fillStyle = A.pal.page;
       ctx.fillRect(0, 0, W, H);
-      // en temporada, adornos de la fecha alrededor del papel (márgenes)
-      if (A.season && A.deco.length) {
-        ctx.save();
-        ctx.globalAlpha = 0.9;
-        let n = 0;
-        for (let yy = TOP + 30; yy < H - 40; yy += 150) {
-          [M / 2, W - M / 2].forEach((xx, lado) => {
-            const g = A.deco[n++ % A.deco.length];
-            const s = Math.min(26 / g.naturalWidth, 26 / g.naturalHeight);
-            ctx.save();
-            ctx.translate(xx, yy + (lado ? 75 : 0));
-            ctx.rotate((n % 2 ? -1 : 1) * 0.25);
-            ctx.drawImage(g, (-g.naturalWidth * s) / 2, (-g.naturalHeight * s) / 2, g.naturalWidth * s, g.naturalHeight * s);
-            ctx.restore();
-          });
-        }
-        ctx.restore();
-      }
       ctx.save();
-      ctx.shadowColor = 'rgba(70, 25, 48, 0.22)';
-      ctx.shadowBlur = 22;
-      ctx.shadowOffsetY = 7;
-      ctx.fillStyle = '#fffdfb';
-      paperPath(ctx, TOP, bottom);
+      ctx.globalAlpha = 0.35;
+      const conf = ['#ffffff', A.pal.pri, A.pal.sec];
+      for (let i = 0; i < 40; i++) {
+        ctx.fillStyle = conf[i % 3];
+        const x = (i * 131) % W, yy = (i * 89) % H;
+        ctx.beginPath();
+        ctx.arc(x, yy, 2.5 + (i % 3), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+      ctx.save();
+      ctx.shadowColor = 'rgba(70, 25, 48, 0.2)';
+      ctx.shadowBlur = 26;
+      ctx.shadowOffsetY = 8;
+      rr(ctx, PAD, TOP, W - 2 * PAD, H - TOP - PAD, 30);
+      ctx.fillStyle = '#ffffff';
       ctx.fill();
       ctx.restore();
-      // marca de agua: postres translúcidos girados, en filas desfasadas, recortados al papel
       ctx.save();
-      paperPath(ctx, TOP, bottom);
+      rr(ctx, PAD, TOP, W - 2 * PAD, H - TOP - PAD, 30);
       ctx.clip();
-      const pat = A.pat.filter(Boolean);
-      if (pat.length) {
-        const cell = 104;
-        ctx.globalAlpha = 0.095;
-        for (let r = 0, yy = TOP + 20; yy < bottom + cell; r++, yy += cell * 0.9) {
-          for (let k = 0, xx = M - (r % 2 ? 0 : cell / 2) + 8; xx < W; k++, xx += cell) {
-            const g = pat[(r * 4 + k * 3) % pat.length];
-            const s = Math.min(70 / g.naturalWidth, 70 / g.naturalHeight);
-            ctx.save();
-            ctx.translate(xx + cell / 2, yy + cell / 2);
-            ctx.rotate(((r + k) % 2 ? -1 : 1) * 0.22);
-            ctx.drawImage(g, (-g.naturalWidth * s) / 2, (-g.naturalHeight * s) / 2, g.naturalWidth * s, g.naturalHeight * s);
-            ctx.restore();
-          }
-        }
-      }
-      ctx.restore();
       paint(ctx, sale, A, false);
+      ctx.restore();
       return c;
     },
 
