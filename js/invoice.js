@@ -487,6 +487,12 @@
     y += mh + 30;
     text(THANKS[st], cxm, y, fontD(27), K.ink, 'center');
     y += 10;
+    if (A.season) {
+      // saludo de la fecha, en el color de la temporada
+      y += 30;
+      text(A.season.saludo, cxm, y, fontD(22), D.color.ensure ? D.color.ensure(A.season.brand, '#fffdfb', 4.5, '#000000') : A.season.brand, 'center');
+      y += 4;
+    }
     if (SUBLINE[st]) {
       y += 22;
       ctx.font = mono(700, 14);
@@ -531,17 +537,27 @@
     } catch (e) {}
     const ownLogo = !S.logo && /^dulza$/i.test(String(S.name || '').trim());
     const tokens = Array.from(new Set(((sale && sale.items) || []).map((i) => i.emoji || D.DEFAULT_GLYPH).filter(D.isPostre)));
-    const mood = D.gpt.moods[MOOD[sale ? D.sale.status(sale) : 'pending']] || D.gpt.bust;
+    // En temporada, Dulce va con el vestuario de la fecha y los adornos de la fecha decoran el papel
+    const season = D.season ? D.season.current() : null;
+    const mood = season ? D.gpt.bust : D.gpt.moods[MOOD[sale ? D.sale.status(sale) : 'pending']] || D.gpt.bust;
     const marks = Array.from(new Set([...WATERMARK, ...tokens])).slice(0, 14);
+    const adornos = D.season ? D.season.adornos(season) : [];
     const [logo, mascot, brandLogo, ...rest] = await Promise.all([
       D.art.srcToImage(S.logo || D.gpt.url(D.gpt.icon)),
       D.art.srcToImage(S.mascot || D.gpt.url(mood)),
       ownLogo ? D.art.srcToImage(D.gpt.url(D.gpt.logo)).catch(() => null) : null,
       ...tokens.map((t) => D.art.srcToImage(D.postreUrl(t)).catch(() => null)),
       ...marks.map((t) => D.art.srcToImage(D.postreUrl(t)).catch(() => null)),
+      ...adornos.map((u) => D.art.srcToImage(u).catch(() => null)),
     ]);
     const glyphs = rest.slice(0, tokens.length);
-    return { colors: K, logo, mascot, brandLogo, pat: rest.slice(tokens.length), glyphs: Object.fromEntries(tokens.map((t, i) => [t, glyphs[i]])) };
+    const deco = rest.slice(tokens.length + marks.length).filter(Boolean);
+    return {
+      colors: K, logo, mascot, brandLogo, season, deco,
+      // marca de agua: en temporada, los adornos de la fecha mezclados con los postres
+      pat: deco.length ? [...deco, ...rest.slice(tokens.length, tokens.length + 4)] : rest.slice(tokens.length, tokens.length + marks.length),
+      glyphs: Object.fromEntries(tokens.map((t, i) => [t, glyphs[i]])),
+    };
   }
 
   D.invoice = {
@@ -556,8 +572,26 @@
       const ctx = c.getContext('2d');
       ctx.scale(scale, scale);
       // fondo suave con el color de la marca y el papel encima, con sombra
-      ctx.fillStyle = D.color.mix(A.colors.brand, '#ffffff', 0.86);
+      ctx.fillStyle = A.season ? D.color.mix(A.season.brand, '#ffffff', 0.8) : D.color.mix(A.colors.brand, '#ffffff', 0.86);
       ctx.fillRect(0, 0, W, H);
+      // en temporada, adornos de la fecha alrededor del papel (márgenes)
+      if (A.season && A.deco.length) {
+        ctx.save();
+        ctx.globalAlpha = 0.9;
+        let n = 0;
+        for (let yy = TOP + 30; yy < H - 40; yy += 150) {
+          [M / 2, W - M / 2].forEach((xx, lado) => {
+            const g = A.deco[n++ % A.deco.length];
+            const s = Math.min(26 / g.naturalWidth, 26 / g.naturalHeight);
+            ctx.save();
+            ctx.translate(xx, yy + (lado ? 75 : 0));
+            ctx.rotate((n % 2 ? -1 : 1) * 0.25);
+            ctx.drawImage(g, (-g.naturalWidth * s) / 2, (-g.naturalHeight * s) / 2, g.naturalWidth * s, g.naturalHeight * s);
+            ctx.restore();
+          });
+        }
+        ctx.restore();
+      }
       ctx.save();
       ctx.shadowColor = 'rgba(70, 25, 48, 0.22)';
       ctx.shadowBlur = 22;

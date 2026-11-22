@@ -16,11 +16,13 @@
       const S = D.data.settings;
       const root = document.documentElement;
       const C = D.color;
-      const brand = C.valid(S.brand) ? S.brand : D.defaults.brand;
-      // Temporada (Navidad, Halloween…): Dulce cambia de vestuario y el acento se combina con el de la marca
+      // Temporada (Navidad, Halloween…): Dulce cambia de vestuario y los colores de la fecha se FUNDEN con los de la
+      // marca (mitad y mitad en el principal, más de la fecha en el acento); fuera de temporada, los de siempre
       const season = D.season ? D.season.sync() : null;
+      const baseBrand = C.valid(S.brand) ? S.brand : D.defaults.brand;
       const baseAccent = C.valid(S.accent) ? S.accent : D.defaults.accent;
-      const accent = season ? C.mix(baseAccent, season.accent, 0.7) : baseAccent;
+      const brand = season ? C.mix(baseBrand, season.brand, 0.55) : baseBrand;
+      const accent = season ? C.mix(baseAccent, season.accent, 0.8) : baseAccent;
       const scheme = D.theme.scheme();
       const dark = scheme === 'dark';
 

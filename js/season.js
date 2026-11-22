@@ -65,27 +65,27 @@
   /* ---------- Temporadas (en orden de prioridad si se cruzaran) ---------- */
   const SEASONS = [
     {
-      id: 'madre', name: 'Día de la Madre', emoji: '💐', saludo: '¡Feliz Día de la Madre!', accent: '#B65FD6', deco: '#FF8FBB',
+      id: 'madre', name: 'Día de la Madre', emoji: '💐', saludo: '¡Feliz Día de la Madre!', brand: '#A24BD1', accent: '#FF7EB6', deco: '#FF8FBB',
       when: (t, y, p) => upTo(t, (MADRE[p] || MADRE_MUNDIAL)(y), 10),
     },
     {
-      id: 'navidad', name: 'Navidad', emoji: '🎄', saludo: '¡Feliz Navidad!', accent: '#D7263D', deco: '#E2A24C',
+      id: 'navidad', name: 'Navidad', emoji: '🎄', saludo: '¡Feliz Navidad!', brand: '#C8102E', accent: '#E2A24C', deco: '#E2A24C',
       when: (t, y) => between(t, day(y, 11, 1), day(y, 11, 31)) || between(t, day(y, 0, 1), day(y, 0, 6)),
     },
     {
-      id: 'pascua', name: 'Pascua', emoji: '🐣', saludo: '¡Feliz Pascua!', accent: '#9B6BE0', deco: '#F5C542',
+      id: 'pascua', name: 'Pascua', emoji: '🐣', saludo: '¡Feliz Pascua!', brand: '#8E5BD8', accent: '#F5C542', deco: '#F5C542',
       when: (t, y) => upTo(t, easter(y), 7),
     },
     {
-      id: 'padre', name: 'Día del Padre', emoji: '🎀', saludo: '¡Feliz Día del Padre!', accent: '#2E6FD8', deco: '#7FB8FF',
+      id: 'padre', name: 'Día del Padre', emoji: '🎀', saludo: '¡Feliz Día del Padre!', brand: '#1F4FA8', accent: '#E2A24C', deco: '#7FB8FF',
       when: (t, y, p) => upTo(t, (PADRE[p] || PADRE_MUNDIAL)(y), 7),
     },
     {
-      id: 'halloween', name: 'Halloween', emoji: '🎃', saludo: '¡Feliz Halloween!', accent: '#F07F13', deco: '#8F4DFF',
+      id: 'halloween', name: 'Halloween', emoji: '🎃', saludo: '¡Feliz Halloween!', brand: '#7B2FD0', accent: '#F07F13', deco: '#F07F13',
       when: (t, y) => between(t, day(y, 9, 20), day(y, 9, 31)),
     },
     {
-      id: 'amor', emoji: '💘', accent: '#E0245E', deco: '#FF8FBB',
+      id: 'amor', emoji: '💘', brand: '#D6174F', accent: '#FF8FBB', deco: '#FF8FBB',
       // en Colombia es «Amor y Amistad» (septiembre); en el resto, San Valentín (14 de febrero)
       get name() { return AMOR[pais()] ? 'Amor y Amistad' : 'San Valentín'; },
       get saludo() { return AMOR[pais()] ? '¡Feliz día del Amor y la Amistad!' : '¡Feliz San Valentín!'; },
@@ -94,8 +94,15 @@
   ];
 
   // Lo que se cambia y lo original, para poder volver
-  const ORIG = { bust: D.gpt.bust, full: D.gpt.full, hello: D.gpt.moods.hello };
+  const ORIG = { bust: D.gpt.bust, full: D.gpt.full, hello: D.gpt.moods.hello, moods: Object.assign({}, D.gpt.moods), candy: Object.assign({}, D.CANDY) };
+  // En temporada, TODAS las caras de Dulce van con el vestuario de la fecha (nunca con la ropa rosa de siempre):
+  // las alegres usan «hola» y las demás el busto
+  const ALEGRES = ['happy', 'joy', 'hello', 'hug', 'love', 'kiss', 'cheer', 'yum', 'bake'];
   const file = (id, f) => `temporadas/${id}/${f}.png`;
+  // Íconos de la interfaz que tienen versión de temporada (temporadas/<id>/iconos/<nombre>.png)
+  const ICONOS = ['home', 'receipt', 'wallet', 'cart', 'users', 'cupcake', 'truck', 'gift', 'chart', 'sliders', 'more', 'sparkle', 'heart', 'star', 'bell', 'calendar'];
+  // Temporadas cuya lámina de íconos ya está en la app
+  const CON_ICONOS = ['navidad'];
 
   // Temporadas con vestuario ya dibujado (las demás quedan listas en el calendario y se encienden al agregar sus imágenes)
   const LISTAS = ['navidad'];
@@ -111,6 +118,10 @@
     list: SEASONS,
     byDate,
     pais,
+    // Adornos de la temporada (para la factura y las piezas): rutas de sus íconos temáticos, o [] si no tiene
+    adornos(s = D.season.current()) {
+      return s && CON_ICONOS.includes(s.id) ? ['star', 'heart', 'gift', 'sparkle', 'bell', 'cupcake'].map((n) => D.gpt.url(`temporadas/${s.id}/iconos/${n}.png`)) : [];
+    },
     // Temporada vigente según Ajustes: 'auto' (por fecha, por defecto), 'off' o el id de una temporada fija
     current() {
       const pref = (D.data && D.data.settings && D.data.settings.season) || 'auto';
@@ -123,7 +134,11 @@
       const s = D.season.current();
       D.gpt.bust = s ? file(s.id, 'busto') : ORIG.bust;
       D.gpt.full = s ? file(s.id, 'personaje') : ORIG.full;
-      D.gpt.moods.hello = s ? file(s.id, 'hola') : ORIG.hello;
+      Object.assign(D.gpt.moods, ORIG.moods);
+      if (s) Object.keys(D.gpt.moods).forEach((k) => (D.gpt.moods[k] = file(s.id, ALEGRES.includes(k) ? 'hola' : 'busto')));
+      // íconos dulces de la interfaz con la temática de la fecha
+      Object.assign(D.CANDY, ORIG.candy);
+      if (s && CON_ICONOS.includes(s.id)) ICONOS.forEach((n) => (D.CANDY[n] = `temporadas/${s.id}/iconos/${n}.png`));
       // caritas de Dulce que ya están en pantalla (botón y chat del asistente, pantalla de clave)
       const hola = D.gpt.url(D.gpt.moods.hello);
       document.querySelectorAll('img.bot-fab__mood, img.gmsg__mood, img.c-guide__mood, img.lock__mood').forEach((i) => {
