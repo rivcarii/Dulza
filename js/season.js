@@ -94,7 +94,12 @@
   ];
 
   // Lo que se cambia y lo original, para poder volver
-  const ORIG = { bust: D.gpt.bust, full: D.gpt.full, hello: D.gpt.moods.hello, moods: Object.assign({}, D.gpt.moods), candy: Object.assign({}, D.CANDY) };
+  const ORIG = {
+    bust: D.gpt.bust, full: D.gpt.full, hello: D.gpt.moods.hello, moods: Object.assign({}, D.gpt.moods), candy: Object.assign({}, D.CANDY),
+    logo: D.gpt.logo, logoName: D.gpt.logoName, badge: D.gpt.badge, icon: D.gpt.icon,
+  };
+  // Temporadas con logos propios (temporadas/<id>/logos/: logo, letras, insignia, isotipo, favicon-64)
+  const CON_LOGOS = ['navidad'];
   // En temporada, TODAS las caras de Dulce van con el vestuario de la fecha (nunca con la ropa rosa de siempre):
   // las alegres usan «hola» y las demás el busto
   const ALEGRES = ['happy', 'joy', 'hello', 'hug', 'love', 'kiss', 'cheer', 'yum', 'bake'];
@@ -136,6 +141,20 @@
       D.gpt.full = s ? file(s.id, 'personaje') : ORIG.full;
       Object.assign(D.gpt.moods, ORIG.moods);
       if (s) Object.keys(D.gpt.moods).forEach((k) => (D.gpt.moods[k] = file(s.id, ALEGRES.includes(k) ? 'hola' : 'busto')));
+      // logos (factura, bienvenida, menú lateral, pantalla de carga, ícono) y la pestaña del navegador
+      const L = s && CON_LOGOS.includes(s.id) ? (f) => `temporadas/${s.id}/logos/${f}.png` : null;
+      D.gpt.logo = L ? L('logo') : ORIG.logo;
+      D.gpt.logoName = L ? L('letras') : ORIG.logoName;
+      D.gpt.badge = L ? L('insignia') : ORIG.badge;
+      D.gpt.icon = L ? L('isotipo') : ORIG.icon;
+      const fav = document.querySelector('link[rel="icon"][sizes="64x64"]');
+      if (fav) {
+        fav.dataset.orig = fav.dataset.orig || fav.getAttribute('href');
+        fav.setAttribute('href', L ? D.gpt.url(L('favicon-64')) : fav.dataset.orig);
+      }
+      try {
+        localStorage.setItem('dz-season-logos', L ? '1' : '');
+      } catch (e) {}
       // íconos dulces de la interfaz con la temática de la fecha
       Object.assign(D.CANDY, ORIG.candy);
       if (s && CON_ICONOS.includes(s.id)) ICONOS.forEach((n) => (D.CANDY[n] = `temporadas/${s.id}/iconos/${n}.png`));
