@@ -17,7 +17,10 @@
       const root = document.documentElement;
       const C = D.color;
       const brand = C.valid(S.brand) ? S.brand : D.defaults.brand;
-      const accent = C.valid(S.accent) ? S.accent : D.defaults.accent;
+      // Temporada (Navidad, Halloween…): Dulce cambia de vestuario y el acento se combina con el de la marca
+      const season = D.season ? D.season.sync() : null;
+      const baseAccent = C.valid(S.accent) ? S.accent : D.defaults.accent;
+      const accent = season ? C.mix(baseAccent, season.accent, 0.7) : baseAccent;
       const scheme = D.theme.scheme();
       const dark = scheme === 'dark';
 
@@ -38,6 +41,8 @@
         '--brand-fill': fill,
         '--on-brand': onBrand,
         '--brand-ink': ink,
+        '--season': season ? season.accent : accent,
+        '--season-deco': season ? season.deco : accent,
       };
       Object.entries(vars).forEach(([k, v]) => root.style.setProperty(k, v));
       root.dataset.theme = scheme;

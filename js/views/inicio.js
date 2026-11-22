@@ -173,7 +173,10 @@
 
       return D.ui.page({
         title: `${D.greeting()}${first ? ', ' + esc(first) : ''}`,
-        kicker: D.fmtDateLong(t),
+        kicker: (() => {
+          const s = D.season && D.season.current();
+          return D.fmtDateLong(t) + (s ? ` · <span class="season-chip">${s.emoji} ${esc(s.saludo)}</span>` : '');
+        })(),
         sub: '',
         left: `<span class="navbar__brand">${D.art.logo({ size: 34 })}</span>`,
         actions: `<button class="icon-btn glass" data-go="ajustes" aria-label="Ajustes">${D.icon('sliders')}</button>`,

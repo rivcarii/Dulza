@@ -52,6 +52,7 @@ else if(matchMedia('(prefers-color-scheme: dark)').matches){r.dataset.theme='dar
 <body>
 <div id="splash" role="status" aria-live="polite" aria-label="Cargando Dulza">
   <img class="splash__char" src="assets/brand/gpt/v3/personaje.png" alt="" width="150" height="150" decoding="async">
+  <script>/* Dulce con el vestuario de la temporada (la recuerda de la última vez) */try{var dzs=localStorage.getItem('dz-season');if(/^[a-z]+$/.test(dzs||''))document.querySelector('.splash__char').src='assets/brand/gpt/temporadas/'+dzs+'/personaje.png';}catch(e){}</script>
   <img class="splash__word" src="assets/brand/gpt/v3/logos/logo-nombre.png" alt="Dulza" width="170" decoding="async">
   <div class="splash__bar" aria-hidden="true"><i></i></div>
   <p class="splash__txt">Preparando tu negocio<span class="splash__dots" aria-hidden="true"><i></i><i></i><i></i></span></p>
@@ -76,6 +77,7 @@ else if(matchMedia('(prefers-color-scheme: dark)').matches){r.dataset.theme='dar
 <script src="js/art.js"></script>
 <script src="js/character.js"></script>
 <script src="js/brand.js"></script>
+<script src="js/season.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/sound.js"></script>
 <script src="js/pickers.js"></script>

@@ -257,7 +257,7 @@
     let sig = '';
     D.store.on(() => {
       const S = D.data.settings;
-      const s = [S.brand, S.accent, S.theme, S.logo ? 1 : 0, S.name].join('|');
+      const s = [S.brand, S.accent, S.theme, S.logo ? 1 : 0, S.name, S.season, S.country].join('|');
       if (s !== sig) {
         sig = s;
         D.theme.apply();
@@ -265,7 +265,7 @@
       }
       D.router.render();
     });
-    sig = [D.data.settings.brand, D.data.settings.accent, D.data.settings.theme, D.data.settings.logo ? 1 : 0, D.data.settings.name].join('|');
+    sig = [D.data.settings.brand, D.data.settings.accent, D.data.settings.theme, D.data.settings.logo ? 1 : 0, D.data.settings.name, D.data.settings.season, D.data.settings.country].join('|');
 
     window.addEventListener('hashchange', () => D.router.render({ force: true }));
     if (!location.hash) history.replaceState(null, '', '#/inicio');

@@ -97,6 +97,19 @@
         <div class="swatches" role="group" aria-label="Paleta de colores">${D.PALETTES.map((p) => `<button type="button" class="swatch" data-act="set.palette" data-id="${p.id}" aria-pressed="${s.palette === p.id}" aria-label="Paleta ${p.name}"><span class="swatch__dot" style="--a:${p.brand};--b:${p.accent}">${D.icon('check')}</span>${p.name}</button>`).join('')}</div>
       </div>
       <p class="form-note">Cambia la app, la factura y el ícono de golpe. Los colores de texto se ajustan solos para que siempre se lean bien.</p>
+      ${D.season ? (() => {
+        const hoy = D.season.byDate();
+        const pref = s.season || 'auto';
+        const opt = (v, l) => `<option value="${v}" ${v === pref ? 'selected' : ''}>${esc(l)}</option>`;
+        return `<div class="fields" data-rise>
+          <label class="field"><span>Vestuario de temporada</span><select data-change="set.season">
+            ${opt('auto', `Automático según la fecha${hoy ? ` (ahora: ${hoy.emoji} ${hoy.name})` : ''}`)}
+            ${opt('off', 'Apagado: Dulce con su ropa de siempre')}
+            ${D.season.list.map((x) => opt(x.id, `${x.emoji} ${x.name}`)).join('')}
+          </select></label>
+        </div>
+        <p class="form-note">En cada festividad Dulce se cambia de ropa y la app toma un toque de color de la fecha, sin perder los colores de ${esc(s.name || 'tu marca')}. Las fechas siguen las costumbres de ${esc(D.season.pais() || 'tu país')} (Ajustes → País).</p>`;
+      })() : ''}
 
       <div class="form-title" data-rise>Sonido</div>
       <div class="fields" data-rise>
@@ -152,6 +165,13 @@
     if (!c) return;
     Object.assign(S(), { country: c.n, dial: c.d, currency: c.c, decimals: c.dec, numFmt: c.f });
     save(false);
+  };
+  D.chg['set.season'] = (el) => {
+    S().season = el.value;
+    save();
+    D.theme.apply();
+    const s = D.season.current();
+    D.toast(s ? `${s.emoji} Dulce se puso su ropa de ${s.name}` : 'Dulce volvió a su ropa de siempre');
   };
   D.seg['set.theme'] = (v) => {
     S().theme = v;

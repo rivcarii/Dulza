@@ -178,3 +178,9 @@ Se probó con nombres larguísimos, correos como nombre, nombres de una letra, e
 - **Las piezas se dibujan en la app** (canvas) sobre ilustraciones sin texto (`assets/publicidad/base/`). El nombre, los **precios** (de contado y a plazo, del catálogo de Postres) y el **WhatsApp del negocio** (Ajustes) salen siempre al día: si cambias un precio, la próxima vez que se abre Publicidad las imágenes ya lo traen. Si un postre se pausa o se queda sin precio, sus piezas se ocultan.
 - Cada ilustración se enlaza con su postre del catálogo por id y, si no, por nombre (`POSTRES` al inicio de `js/views/publicidad.js`). Para un postre nuevo hace falta pedir su ilustración sin texto (Codex, con `personaje.png` y el ícono del postre de referencia) y agregarlo a `POSTRES` y a `ORDEN`.
 - Las ilustraciones no se descargan al instalar la app: se guardan para usar sin internet la primera vez que se ven.
+## Temporadas (v1.24)
+
+- En cada festividad **Dulce se cambia de vestuario** (botón y chat de Dulce, pantalla de clave, Más, Inicio, factura y pantalla de carga) y la app toma un **acento de color de la fecha combinado con el de la marca**: el color principal sigue siendo el de Ajustes → Apariencia; la temporada cambia el acento, pone un saludo junto a la fecha en Inicio y un patrón suave arriba del fondo (copos, corazones, flores, estrellas, huevitos).
+- Calendario en `js/season.js`. Las fechas que cambian según el país (Ajustes → País) están en `AMOR`, `MADRE` y `PADRE`; por ejemplo, Colombia celebra Amor y Amistad en septiembre y los demás países San Valentín el 14 de febrero.
+- **Ajustes → Apariencia → Vestuario de temporada**: automático según la fecha (por defecto), apagado o una temporada fija.
+- Vestuarios en `assets/brand/gpt/temporadas/<id>/` (`hola.png`, `busto.png`, `personaje.png`), dibujados con Codex a partir de las originales. Una temporada se enciende al agregar su id a `LISTAS` en `js/season.js`.
