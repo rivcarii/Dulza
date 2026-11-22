@@ -533,43 +533,35 @@
     const sombra = F ? F.sombra : NORMAL.sombra;
     const seed = [...p.id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
     const frase = F ? F.frase : FRASES[seed % FRASES.length];
-    const [dib, dulce] = await Promise.all([
+    const [dib, dulce, band] = await Promise.all([
       dibujoPostre(p.emoji || D.DEFAULT_GLYPH),
       img(F ? `assets/brand/gpt/temporadas/${pz.t}/busto.png` : 'assets/brand/gpt/v3/busto.png').catch(() => null),
+      img(`${BASE}bandejas/${pz.t || 'normal'}.png`).catch(() => null),
     ]);
     fillBg(c, W, H, bg[0], bg[1]);
     confeti(c, W, H, F ? ['#FFFFFF', F.acento, F.sub] : NORMAL.deco, seed);
 
-    // sticker del postre: círculo de luz + aro blanco + dibujo
-    const R = v ? 300 : 230, cx = v ? 600 : 690, cy = v ? 930 : 520;
-    const glow = c.createRadialGradient(cx, cy, R * 0.2, cx, cy, R * 1.45);
-    glow.addColorStop(0, 'rgba(255,255,255,0.75)');
+    // el postre sobre su bandeja con pedestal (como en las ilustraciones), con un brillo suave detrás
+    const R = v ? 360 : 230, cx = v ? 590 : 690, cy = v ? 890 : 520;
+    const glow = c.createRadialGradient(cx, cy, R * 0.2, cx, cy, R * 1.5);
+    glow.addColorStop(0, 'rgba(255,255,255,0.6)');
     glow.addColorStop(1, 'rgba(255,255,255,0)');
     c.fillStyle = glow;
-    c.fillRect(cx - R * 1.5, cy - R * 1.5, R * 3, R * 3);
-    c.save();
-    c.shadowColor = 'rgba(60,20,40,0.25)';
-    c.shadowBlur = 30;
-    c.shadowOffsetY = 12;
-    c.beginPath();
-    c.arc(cx, cy, R, 0, Math.PI * 2);
-    c.fillStyle = '#FFFFFF';
-    c.fill();
-    c.restore();
-    c.lineWidth = 10;
-    c.strokeStyle = F ? F.acento : '#FF8FBB';
-    c.beginPath();
-    c.arc(cx, cy, R - 5, 0, Math.PI * 2);
-    c.stroke();
+    c.fillRect(cx - R * 1.6, cy - R * 1.6, R * 3.2, R * 3.2);
+    const sw = R * 2.1; // ancho de la bandeja
+    const plato = cy + R * 0.42; // donde se apoya el postre
+    if (band) {
+      const sh = (band.height / band.width) * sw;
+      c.drawImage(band, cx - sw / 2, plato - sh * (BANDEJA_PLATO[pz.t || 'normal'] || 0.22), sw, sh);
+    } else bandejaDibujada(c, cx, plato, sw, F ? F.acento : '#E2A24C');
+    const alto = R * 1.35, ancho = R * 1.6; // caja máxima del postre
     if (dib) {
-      const s = Math.min((R * 1.45) / dib.width, (R * 1.45) / dib.height);
-      c.drawImage(dib, cx - (dib.width * s) / 2, cy - (dib.height * s) / 2 + 6, dib.width * s, dib.height * s);
+      const s = Math.min(ancho / dib.width, alto / dib.height);
+      c.drawImage(dib, cx - (dib.width * s) / 2, plato - dib.height * s + R * 0.06, dib.width * s, dib.height * s);
     } else {
       c.font = `${Math.round(R * 1.1)}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
       c.textAlign = 'center';
-      c.textBaseline = 'middle';
-      c.fillText(p.emoji || '🧁', cx, cy + 8);
-      c.textBaseline = 'alphabetic';
+      c.fillText(p.emoji || '🧁', cx, plato + R * 0.02);
     }
     // destellos alrededor del sticker
     c.fillStyle = F ? F.acento : '#E2A24C';
@@ -623,6 +615,43 @@
       cta(c, x, 916, cw, h, ctaLines(true), 30, { r: 26, border: 4, off: 6, icon: 40 });
     }
   }
+  // Bandejas dibujadas por Codex (assets/publicidad/bandejas/<ocasión>.png): BANDEJA_PLATO es la altura, en fracción
+  // de la imagen, de la superficie del plato donde se apoya el postre
+  const BANDEJA_PLATO = { normal: 0.21, navidad: 0.18, amor: 0.26, madre: 0.3, padre: 0.2, pascua: 0.25, halloween: 0.21 };
+  // Bandeja de respaldo, dibujada a mano, por si su imagen no cargó
+  function bandejaDibujada(c, cx, y, w, acento) {
+    const lin = '#3B1D10';
+    c.save();
+    c.lineWidth = 5;
+    c.strokeStyle = lin;
+    // pie y base
+    c.fillStyle = '#FFF8EE';
+    c.beginPath();
+    c.moveTo(cx - w * 0.08, y + w * 0.08);
+    c.lineTo(cx + w * 0.08, y + w * 0.08);
+    c.lineTo(cx + w * 0.05, y + w * 0.3);
+    c.lineTo(cx - w * 0.05, y + w * 0.3);
+    c.closePath();
+    c.fill();
+    c.stroke();
+    c.fillStyle = acento;
+    c.beginPath();
+    c.ellipse(cx, y + w * 0.33, w * 0.2, w * 0.05, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    // plato: borde dorado y superficie crema
+    c.fillStyle = acento;
+    c.beginPath();
+    c.ellipse(cx, y + w * 0.03, w * 0.5, w * 0.1, 0, 0, Math.PI * 2);
+    c.fill();
+    c.stroke();
+    c.fillStyle = '#FFFDF6';
+    c.beginPath();
+    c.ellipse(cx, y, w * 0.46, w * 0.075, 0, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+
   // Parte un texto en renglones que quepan en maxW (como máximo n renglones)
   function wrapLines(c, s, maxW, n) {
     const words = String(s || '').split(/\s+/);
