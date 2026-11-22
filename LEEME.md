@@ -172,9 +172,9 @@ assets/brand/         Versión vectorial anterior (logos y personaje en SVG/PNG)
 
 Se probó con nombres larguísimos, correos como nombre, nombres de una letra, emojis, cifras de miles de millones y pantallas de 320 px. Se corrigió: nombres que se cortaban en una línea (ahora hasta 2 líneas), el gráfico del Inicio que ensanchaba la pantalla, el resumen de Ventas que dejaba una tarjeta sola, y el pie de las hojas (chat de Dulce y factura) que se salía del ancho.
 
-## Publicidad (v1.20)
+## Publicidad (v1.20 · precios al día en v1.21)
 
-- **Más → Publicidad** (en la computadora, en la barra lateral) muestra piezas listas para estados de WhatsApp, historias de Instagram y Facebook, publicaciones y un volante. Cada una tiene **Compartir** (abre el menú del teléfono con la imagen: WhatsApp → «Mi estado», Instagram/Facebook → «Tu historia») y **Descargar**. En la computadora, Compartir descarga la imagen.
-- Las imágenes están en `assets/publicidad/` (JPG) y `assets/publicidad/mini/` (miniaturas). La lista de piezas está al inicio de `js/views/publicidad.js` (`PIEZAS`): para agregar una, se pone el archivo con el mismo nombre en las dos carpetas y una línea en la lista.
-- Las ilustraciones las dibujó Codex sin texto. Los textos y precios se ponen con plantillas HTML en la carpeta de trabajo `Dulza-publicidad/plantillas` (fuera del repositorio) y se exportan con Edge. **Si cambian los precios hay que volver a exportar las piezas que los muestran.**
-- Las imágenes no se descargan al instalar la app: se guardan para usar sin internet la primera vez que se ven.
+- **Más → Publicidad** (en la computadora, en la barra lateral): piezas para estados de WhatsApp, historias de Instagram y Facebook, publicaciones y un volante, también en versión navideña. Cada una tiene **Compartir** (abre el menú del teléfono con la imagen: WhatsApp → «Mi estado», Instagram/Facebook → «Tu historia») y **Descargar**. En la computadora, Compartir descarga.
+- **Las piezas se dibujan en la app** (canvas) sobre ilustraciones sin texto (`assets/publicidad/base/`). El nombre, los **precios** (de contado y a plazo, del catálogo de Postres) y el **WhatsApp del negocio** (Ajustes) salen siempre al día: si cambias un precio, la próxima vez que se abre Publicidad las imágenes ya lo traen. Si un postre se pausa o se queda sin precio, sus piezas se ocultan.
+- Cada ilustración se enlaza con su postre del catálogo por id y, si no, por nombre (`POSTRES` al inicio de `js/views/publicidad.js`). Para un postre nuevo hace falta pedir su ilustración sin texto (Codex, con `personaje.png` y el ícono del postre de referencia) y agregarlo a `POSTRES` y a `ORDEN`.
+- Las ilustraciones no se descargan al instalar la app: se guardan para usar sin internet la primera vez que se ven.
