@@ -53,8 +53,12 @@
     pascua: { emoji: '🐣', name: 'Pascua', saludo: '¡Felices Pascuas!', frase: '¡Dulces Pascuas!', general: 'Postres para compartir en Pascua', ink: '#6B3FA0', sombra: '#F5C542', acento: '#C4165F', sub: '#5A2E1B' },
     halloween: { emoji: '🎃', name: 'Halloween', saludo: '¡Feliz Halloween!', frase: '¡Dulce o truco!', general: 'Postres de miedo… ¡de ricos!', ink: '#fff', sombra: '#24093F', acento: '#FFB347', sub: '#F1E3FF' },
   };
-  // Festividades cuyas ilustraciones ya están en la app
+  // Festividades cuyas ilustraciones ya están en la app (bg: degradado de fondo para las piezas automáticas)
   const FEST_LISTAS = ['navidad', 'amor', 'madre', 'padre', 'pascua', 'halloween'];
+  const FEST_BG = {
+    navidad: ['#90043A', '#C81056'], amor: ['#9E0E3C', '#D6336C'], madre: ['#5E3291', '#A57BD8'],
+    padre: ['#0E2350', '#2A4F9E'], pascua: ['#FFF6D2', '#FFE39A'], halloween: ['#1E0736', '#5B2A8C'],
+  };
   FEST_LISTAS.forEach((t) => {
     const F = FEST[t];
     ORDEN.forEach((k) => {
@@ -64,7 +68,24 @@
     PIEZAS.push({ id: `historia-${t}`, fmt: 'historia', kind: 'fest', t, get title() { return FEST[t].saludo; } });
     PIEZAS.push({ id: `post-${t}`, fmt: 'post', kind: 'fest', t, get title() { return FEST[t].saludo; } });
   });
-  D.PUBLICIDAD = PIEZAS;
+
+  /* ---------- Postres nuevos del catálogo: piezas automáticas ----------
+     Todo postre activo con precio que no tenga ilustración propia recibe su historia y su post (todo el año y en cada
+     festividad), armados con su ícono del catálogo y Dulce al lado. Si luego se le dibuja una ilustración, se agrega a POSTRES. */
+  const nuevos = () => (D.data.products || []).filter((p) => sells(p) && !ORDEN.some((k) => prod(k) === p)).sort((a, b) => a.name.localeCompare(b.name));
+  function piezas() {
+    const out = PIEZAS.slice();
+    nuevos().forEach((p) => {
+      ['', ...FEST_LISTAS].forEach((t) => {
+        const pre = t ? `${t}-` : '';
+        const title = () => (t ? `${p.name} · ${FEST[t].name}` : p.name);
+        out.push({ id: `historia-${pre}p-${p.id}`, fmt: 'historia', kind: 'gen', pid: p.id, t, get title() { return title(); } });
+        out.push({ id: `post-${pre}p-${p.id}`, fmt: 'post', kind: 'gen', pid: p.id, t, get title() { return title(); } });
+      });
+    });
+    return out;
+  }
+  Object.defineProperty(D, 'PUBLICIDAD', { get: piezas, configurable: true });
 
   /* ---------- Catálogo ---------- */
   function prod(k) {
@@ -72,16 +93,21 @@
     const list = D.data.products || [];
     return list.find((p) => P.ids.includes(p.id)) || list.find((p) => P.re.test(p.name || '')) || null;
   }
-  const sells = (p) => !!p && p.active !== false && p.price > 0;
-  function precios(k) {
-    const p = prod(k);
-    if (!sells(p)) return null;
-    return { contado: D.money(p.price), plazo: D.product.hasTwo(p) ? D.money(p.priceCredit) : '' };
+  function sells(p) {
+    return !!p && p.active !== false && p.price > 0;
   }
+  const preciosDe = (p) => (sells(p) ? { contado: D.money(p.price), plazo: D.product.hasTwo(p) ? D.money(p.priceCredit) : '' } : null);
+  const precios = (k) => preciosDe(prod(k));
+  const byId = (id) => (D.data.products || []).find((p) => p.id === id);
+  // Todos los postres a la venta, primero los que tienen ilustración: [{ name, pr, k? }]
+  const menu = () => [
+    ...ORDEN.map((k) => ({ k, name: POSTRES[k].short, pr: precios(k) })).filter((x) => x.pr),
+    ...nuevos().map((p) => ({ name: p.name, pr: preciosDe(p), p })),
+  ];
   const phone = () => String(D.data.settings.phone || '').trim();
-  const available = (pz) => (pz.kind === 'postre' ? !!precios(pz.k) : ORDEN.some((k) => precios(k)));
-  // Firma de lo que cambia el dibujo: si cambian precios o el WhatsApp, se vuelve a dibujar
-  const firma = () => JSON.stringify([ORDEN.map(precios), phone()]);
+  const available = (pz) => (pz.kind === 'postre' ? !!precios(pz.k) : pz.kind === 'gen' ? sells(byId(pz.pid)) : menu().length > 0);
+  // Firma de lo que cambia el dibujo: si cambian postres, precios, nombre o el WhatsApp, se vuelve a dibujar
+  const firma = () => JSON.stringify([menu().map((x) => [x.name, x.pr, x.p && x.p.emoji]), phone(), D.data.settings.name]);
 
   /* ==========================================================================
      Dibujo (canvas)
@@ -113,8 +139,8 @@
         ? Promise.all(['80px "Titan One"', '800 40px Nunito', '700 40px Nunito'].map((f) => document.fonts.load(f).catch(() => null))).then(() => true)
         : Promise.resolve(true)));
 
-  const TITAN = (s) => `${s}px "Titan One", "Arial Black", sans-serif`;
-  const NUNITO = (s, w = 800) => `${w} ${s}px Nunito, "Segoe UI", system-ui, sans-serif`;
+  const TITAN = (s) => `${Math.round(s)}px "Titan One", "Arial Black", sans-serif`; // tamaños enteros: «30.999999px» confundía al ajuste
+  const NUNITO = (s, w = 800) => `${w} ${Math.round(s)}px Nunito, "Segoe UI", system-ui, sans-serif`;
   const WA_PATH =
     'M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1 2.2 1.4 2.5 1.5.3.2.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 .9c.3.1.5.2.5.4.1.1.1.7-.2 1.3Z';
   let waPath = null;
@@ -139,8 +165,8 @@
   function txt(c, s, x, y, { font, color, align = 'center', shadow, ls = 0, maxW } = {}) {
     c.font = font;
     if (maxW && c.measureText(s).width > maxW) {
-      const m = /(\d+)px/.exec(font);
-      const base = font.replace(/\d+px/, '§px');
+      const m = /(\d+(?:\.\d+)?)px/.exec(font);
+      const base = font.replace(/\d+(?:\.\d+)?px/, '§px');
       fit(c, s, (z) => base.replace('§', z), +m[1], maxW);
     }
     if ('letterSpacing' in c) c.letterSpacing = ls ? ls + 'px' : '0px';
@@ -224,6 +250,29 @@
     c.fillRect(0, 0, w, h);
   }
 
+  /* ---------- Logo de la marca (las letras «Dulza» de caramelo; en festividad, su versión de temporada) ----------
+     Si el negocio tiene otro nombre, se escribe con la tipografía. (cx, top) = centro y borde de arriba; h = alto. */
+  const esDulza = () => /^dulza$/i.test(String(D.data.settings.name || 'Dulza').trim());
+  const logoUrl = (t) => (t ? `assets/brand/gpt/temporadas/${t}/logos/letras.png` : 'assets/brand/gpt/v3/logos/logo-nombre.png');
+  async function marca(c, cx, top, h, { t = '', align = 'center', color = '#FF3D8B', shadow = '#C4165F' } = {}) {
+    if (esDulza()) {
+      let i = null;
+      try {
+        i = await img(logoUrl(t));
+      } catch (e) {
+        if (t) i = await img(logoUrl('')).catch(() => null);
+      }
+      if (i) {
+        const w = (i.width / i.height) * h;
+        const x = align === 'right' ? cx - w : align === 'left' ? cx : cx - w / 2;
+        c.drawImage(i, x, top, w, h);
+        return;
+      }
+    }
+    const s = Math.round(h * 0.62);
+    txt(c, D.data.settings.name || 'Dulza', cx, top + h * 0.78, { font: TITAN(s), color, align, shadow: [0, Math.max(3, s / 22), shadow], maxW: 700 });
+  }
+
   /* ---------- Pieza de un postre (normal o navideña) ---------- */
   async function drawPostre(c, pz) {
     const P = POSTRES[pz.k];
@@ -237,7 +286,7 @@
     const ink = nav ? NAV.ink : P.ink;
     const sombra = nav ? NAV.sombra : P.sombra;
     const frase = nav ? F.frase : P.frase;
-    const marca = nav ? { color: F.ink, shadow: [0, 4, NAV.sombra] } : { color: '#FF3D8B', shadow: [0, 4, '#C4165F'] };
+    const marca_ = nav ? { color: F.ink, shadow: [0, 4, NAV.sombra] } : { color: '#FF3D8B', shadow: [0, 4, '#C4165F'] };
     fillBg(c, W, H, P.bg);
     if (!v) c.drawImage(ilus, 0, ilus.height - 2, ilus.width, 2, 0, 1040, 1080, 40); // franja de abajo del mismo fondo
     if (v) {
@@ -247,7 +296,7 @@
       c.drawImage(ilus, 0, ilus.height - 2, ilus.width, 2, 0, 1778, 1080, 142);
       c.drawImage(ilus, 0, 160, 1080, 1620);
       // cabecera
-      txt(c, 'Dulza', 540, 132, { font: TITAN(64), ...marca });
+      await marca(c, 540, 34, 118, { t: pz.t, color: marca_.color, shadow: marca_.shadow[2] });
       let y = 272;
       P.lines.forEach((l, i) => {
         txt(c, l, 540, y, { font: TITAN(128), color: ink, shadow: [0, 5, sombra], maxW: 1000 });
@@ -273,7 +322,7 @@
         if (i < P.lines.length - 1) y += 80;
       });
       txt(c, frase, 44, y + 52, { font: NUNITO(34), color: nav ? NAV.frase : '#8F4DFF', align: 'left', shadow: nav ? [0, 3, NAV.sombra] : null, maxW: 760 });
-      txt(c, 'Dulza', 1036, 92, { font: TITAN(58), align: 'right', ...marca });
+      await marca(c, 1040, 14, 104, { t: pz.t, align: 'right', color: marca_.color, shadow: marca_.shadow[2] });
       // fila inferior: precios + WhatsApp
       const ps = nav ? NAV.pill : P.sombra;
       const items = pr.plazo ? [['Contado', pr.contado, '#FF3D8B'], ['A plazo', pr.plazo, '#B0661A']] : [['Precio', pr.contado, '#FF3D8B']];
@@ -316,24 +365,63 @@
     }
   }
 
+  // ¿El menú es justo el de las ilustraciones (los 3 postres ilustrados, a la venta, y nada más)?
+  const menuClasico = () => {
+    const m = menu();
+    return m.length === ORDEN.length && m.every((x) => x.k);
+  };
+  /* Lista de precios dentro de una caja blanca: todos los postres a la venta, en 1 o 2 columnas según cuántos haya */
+  function listaPrecios(c, x, y, w, h, { titulo = 'Nuestro menú', max = 44 } = {}) {
+    const items = menu();
+    caja(c, x, y, w, h, { r: 32, border: 5, sombra: '#C4165F', off: 8 });
+    const th = titulo ? Math.min(46, h * 0.16) : 0;
+    if (titulo) txt(c, titulo, x + w / 2, y + 14 + th, { font: TITAN(th), color: '#FF3D8B' });
+    const cols = (w >= 900 && items.length > 5) || items.length > 9 ? 2 : 1; // recuadro ancho: 2 columnas; angosto: 1 más grande
+    const perCol = Math.ceil(items.length / cols);
+    const top = y + (titulo ? th + 34 : 22), bottom = y + h - 18;
+    const rowH = Math.min(max * 1.6, (bottom - top) / perCol);
+    let fs = Math.max(16, Math.min(max, rowH * 0.62));
+    const colW = (w - 40) / cols;
+    const two = items.some((it) => it.pr.plazo);
+    const precio = (it) => it.pr.contado + (it.pr.plazo ? ` · ${it.pr.plazo}` : '');
+    // un solo tamaño de letra para todos los renglones: el que deje caber al nombre y al precio más largos
+    items.forEach((it) => {
+      c.font = TITAN(fs);
+      const nw = c.measureText(it.name).width;
+      c.font = NUNITO(fs * 0.92, 900);
+      const pw = c.measureText(precio(it)).width;
+      const libre = colW - 30;
+      if (nw + pw + 24 > libre) fs = Math.max(14, fs * (libre / (nw + pw + 24)));
+    });
+    items.forEach((it, i) => {
+      const col = Math.floor(i / perCol), row = i % perCol;
+      const cx = x + 20 + col * colW, cy = top + row * rowH + rowH * 0.68;
+      txt(c, it.name, cx + 10, cy, { font: TITAN(fs), color: '#5A2E1B', align: 'left' });
+      txt(c, precio(it), cx + colW - 10, cy, { font: NUNITO(fs * 0.92, 900), color: '#FF3D8B', align: 'right' });
+    });
+    if (two) txt(c, 'Contado · a plazo', x + w - 30, y + h - 6, { font: NUNITO(Math.max(14, fs * 0.5)), color: '#8F4DFF', align: 'right' });
+  }
+
   async function drawMenuC(c) {
     const ilus = await img(IL('menu-c'));
     fillBg(c, 1080, 1080, '#FCDFF0');
     c.drawImage(ilus, 0, 0, 1080, 1080);
-    txt(c, 'Dulza', 780, 212, { font: TITAN(150), color: '#FF3D8B', shadow: [0, 6, '#C4165F'] });
+    await marca(c, 780, 36, 204);
     txt(c, 'Postres hechos con amor', 780, 282, { font: NUNITO(38), color: '#8F4DFF', maxW: 540 });
     txt(c, '¡Antójate!', 780, 352, { font: TITAN(44), color: '#5A2E1B' });
     cta(c, 590, 400, 380, 76, ctaLines(false), 30, { border: 5, off: 8, icon: 38 });
-    [397, 625, 850].forEach((x, i) => menuCard(c, x, 848, 214, ORDEN[i], { nameS: 27, rowS: 25, lh: 1.4 }));
+    if (menuClasico()) [397, 625, 850].forEach((x, i) => menuCard(c, x, 848, 214, ORDEN[i], { nameS: 27, rowS: 25, lh: 1.4 }));
+    else listaPrecios(c, 380, 500, 680, 560, { max: 36 });
   }
 
   async function drawMenuV(c) {
     const ilus = await img(IL('menu-v'));
     fillBg(c, 1080, 1920, '#FCDFF2');
     c.drawImage(ilus, 0, 130, 1080, 1620);
-    txt(c, 'Dulza', 540, 230, { font: TITAN(170), color: '#FF3D8B', shadow: [0, 6, '#C4165F'] });
+    await marca(c, 540, 36, 222);
     txt(c, 'Postres hechos con amor', 540, 300, { font: NUNITO(44), color: '#8F4DFF' });
-    [45, 385, 725].forEach((x, i) => menuCard(c, x, 1470, 310, ORDEN[i], { nameS: 36, rowS: 32, lh: 1.4 }));
+    if (menuClasico()) [45, 385, 725].forEach((x, i) => menuCard(c, x, 1470, 310, ORDEN[i], { nameS: 36, rowS: 32, lh: 1.4 }));
+    else listaPrecios(c, 40, 1400, 1000, 340, { max: 44 });
     cta(c, 190, 1760, 700, 104, ctaLines(false), 44);
   }
 
@@ -349,19 +437,22 @@
     rr(c, 29, 29, W - 58, H - 58, 48);
     c.stroke();
     c.restore();
-    txt(c, 'Dulza', 620, 228, { font: TITAN(170), color: '#FF3D8B', shadow: [0, 6, '#C4165F'] });
+    await marca(c, 620, 40, 214);
     txt(c, 'Postres hechos con amor', 620, 292, { font: NUNITO(46), color: '#8F4DFF' });
+    // tabla del menú con todo el catálogo: si hay más de 3 postres, la ilustración se recorta para hacerles lugar
+    const rows = menu().map((it) => [it.name, it.pr]);
+    const two = rows.some((r) => r[1].plazo);
+    const rowH = rows.length > 8 ? Math.max(44, 560 / rows.length) : 70;
+    const extra = Math.max(0, Math.min(400, (rows.length - 3) * rowH));
     // ilustración recortada (mascota + postres)
     c.save();
     c.beginPath();
-    c.rect(210, 296, 820, 890);
+    c.rect(210, 296, 820, 890 - extra);
     c.clip();
-    c.drawImage(ilus, 210, 296 - 126, 820, 1230);
+    const k = (890 - extra) / 890;
+    c.drawImage(ilus, 620 - 410 * k, 296 - 126 * k, 820 * k, 1230 * k);
     c.restore();
-    // tabla del menú
-    const rows = ORDEN.map((k) => [POSTRES[k].short, precios(k)]).filter((r) => r[1]);
-    const two = rows.some((r) => r[1].plazo);
-    const x = 110, y = 1190, w = 1020, rowH = 70;
+    const x = 110, y = 1190 - extra, w = 1020;
     const h = 112 + rows.length * rowH + 20;
     caja(c, x, y, w, h, { r: 36, border: 6, sombra: '#C4165F', off: 10 });
     txt(c, 'Nuestro menú', 620, y + 62, { font: TITAN(46), color: '#FF3D8B' });
@@ -380,9 +471,10 @@
       c.lineTo(cP, yy + 6);
       c.stroke();
       c.restore();
-      txt(c, r[0], cL, yy + 54, { font: TITAN(38), color: '#5A2E1B', align: 'left', maxW: 520 });
-      txt(c, r[1].contado, cC, yy + 54, { font: NUNITO(38, 900), color: '#FF3D8B', align: 'right' });
-      if (two) txt(c, r[1].plazo || r[1].contado, cP, yy + 54, { font: NUNITO(38, 900), color: '#B0661A', align: 'right' });
+      const fs = Math.min(38, rowH * 0.56);
+      txt(c, r[0], cL, yy + rowH * 0.77, { font: TITAN(fs), color: '#5A2E1B', align: 'left', maxW: 520 });
+      txt(c, r[1].contado, cC, yy + rowH * 0.77, { font: NUNITO(fs, 900), color: '#FF3D8B', align: 'right' });
+      if (two) txt(c, r[1].plazo || r[1].contado, cP, yy + rowH * 0.77, { font: NUNITO(fs, 900), color: '#B0661A', align: 'right' });
     });
     // nota de pago (dos colores) y botón
     const ny = y + h + 66;
@@ -395,34 +487,187 @@
     cta(c, 270, ny + 34, 700, 72, ctaLines(false), 34, { border: 4, off: 6, icon: 44 });
   }
 
+  /* ---------- Pieza automática de un postre nuevo (sin ilustración propia) ----------
+     Fondo de la ocasión con confeti, el dibujo del postre (catálogo) dentro de un sticker con brillo, Dulce al lado
+     con el vestuario de la fecha, el nombre, los precios y el WhatsApp. Usa la versión HD del dibujo si existe. */
+  const NORMAL = { bg: ['#FFE6F1', '#FFC9DF'], ink: '#5A2E1B', sombra: '#FF8FBB', frase: '#8F4DFF', deco: ['#FF3D8B', '#8F4DFF', '#E2A24C', '#FFFFFF'] };
+  const FRASES = ['¡Antójate!', '¡Recién hecho para ti!', '¡Hecho con amor!', '¡Pruébalo hoy!'];
+  async function dibujoPostre(e) {
+    if (D.isPostre(e)) {
+      const n = e.slice(2);
+      return img(`assets/brand/gpt/v3/postres-hd/postre-${n}.png`).catch(() => img(D.postreUrl(e)));
+    }
+    return null; // emoji
+  }
+  function confeti(c, W, H, colors, seed) {
+    let h = seed;
+    const rnd = () => ((h = (Math.imul(h, 1664525) + 1013904223) >>> 0) / 4294967296);
+    c.save();
+    for (let i = 0; i < 46; i++) {
+      c.globalAlpha = 0.18 + rnd() * 0.22;
+      c.fillStyle = colors[i % colors.length];
+      const x = rnd() * W, y = rnd() * H, s = 6 + rnd() * 12;
+      if (i % 3 === 0) {
+        c.beginPath();
+        c.arc(x, y, s / 2, 0, Math.PI * 2);
+        c.fill();
+      } else {
+        c.save();
+        c.translate(x, y);
+        c.rotate(rnd() * Math.PI);
+        rr(c, -s, -s / 3.2, s * 2, s / 1.6, s / 3.2);
+        c.fill();
+        c.restore();
+      }
+    }
+    c.restore();
+  }
+  async function drawGen(c, pz) {
+    const p = byId(pz.pid);
+    const pr = preciosDe(p);
+    const v = pz.fmt === 'historia';
+    const F = pz.t ? FEST[pz.t] : null;
+    const W = 1080, H = v ? 1920 : 1080;
+    const bg = F ? FEST_BG[pz.t] : NORMAL.bg;
+    const ink = F ? F.ink : NORMAL.ink;
+    const sombra = F ? F.sombra : NORMAL.sombra;
+    const seed = [...p.id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7);
+    const frase = F ? F.frase : FRASES[seed % FRASES.length];
+    const [dib, dulce] = await Promise.all([
+      dibujoPostre(p.emoji || D.DEFAULT_GLYPH),
+      img(F ? `assets/brand/gpt/temporadas/${pz.t}/busto.png` : 'assets/brand/gpt/v3/busto.png').catch(() => null),
+    ]);
+    fillBg(c, W, H, bg[0], bg[1]);
+    confeti(c, W, H, F ? ['#FFFFFF', F.acento, F.sub] : NORMAL.deco, seed);
+
+    // sticker del postre: círculo de luz + aro blanco + dibujo
+    const R = v ? 300 : 230, cx = v ? 600 : 690, cy = v ? 930 : 520;
+    const glow = c.createRadialGradient(cx, cy, R * 0.2, cx, cy, R * 1.45);
+    glow.addColorStop(0, 'rgba(255,255,255,0.75)');
+    glow.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = glow;
+    c.fillRect(cx - R * 1.5, cy - R * 1.5, R * 3, R * 3);
+    c.save();
+    c.shadowColor = 'rgba(60,20,40,0.25)';
+    c.shadowBlur = 30;
+    c.shadowOffsetY = 12;
+    c.beginPath();
+    c.arc(cx, cy, R, 0, Math.PI * 2);
+    c.fillStyle = '#FFFFFF';
+    c.fill();
+    c.restore();
+    c.lineWidth = 10;
+    c.strokeStyle = F ? F.acento : '#FF8FBB';
+    c.beginPath();
+    c.arc(cx, cy, R - 5, 0, Math.PI * 2);
+    c.stroke();
+    if (dib) {
+      const s = Math.min((R * 1.45) / dib.width, (R * 1.45) / dib.height);
+      c.drawImage(dib, cx - (dib.width * s) / 2, cy - (dib.height * s) / 2 + 6, dib.width * s, dib.height * s);
+    } else {
+      c.font = `${Math.round(R * 1.1)}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText(p.emoji || '🧁', cx, cy + 8);
+      c.textBaseline = 'alphabetic';
+    }
+    // destellos alrededor del sticker
+    c.fillStyle = F ? F.acento : '#E2A24C';
+    [[-1.05, -0.75, 26], [0.95, -0.9, 20], [1.08, 0.55, 16]].forEach(([dx, dy, s]) => {
+      const x = cx + dx * R, y = cy + dy * R;
+      c.beginPath();
+      c.moveTo(x, y - s);
+      c.quadraticCurveTo(x, y, x + s, y);
+      c.quadraticCurveTo(x, y, x, y + s);
+      c.quadraticCurveTo(x, y, x - s, y);
+      c.quadraticCurveTo(x, y, x, y - s);
+      c.fill();
+    });
+    // Dulce presentando (abajo a la izquierda)
+    if (dulce) {
+      const dh = v ? 470 : 430;
+      const dw = (dulce.width / dulce.height) * dh;
+      c.drawImage(dulce, -10, v ? 1036 : H - dh - 120, dw, dh); // en la historia, el corte de abajo queda detrás de los precios
+    }
+
+    // textos
+    c.font = TITAN(v ? 120 : 84);
+    const nameLines = wrapLines(c, p.name, v ? 980 : 600, 2);
+    if (v) {
+      await marca(c, 540, 34, 118, { t: pz.t, color: ink, shadow: sombra });
+      let y = 290;
+      nameLines.forEach((l, i) => txt(c, l, 540, y + i * 118, { font: TITAN(nameLines.length > 1 ? 108 : 124), color: ink, shadow: [0, 5, sombra], maxW: 1000 }));
+      y += (nameLines.length - 1) * 118;
+      txt(c, frase, 540, y + 76, { font: NUNITO(46), color: F ? F.acento : NORMAL.frase, shadow: F ? [0, 3, F.sombra] : null, maxW: 980 });
+      const items = pr.plazo ? [['Contado', pr.contado, '#FF3D8B'], ['A plazo', pr.plazo, '#B0661A']] : [['Precio', pr.contado, '#FF3D8B']];
+      const ws = items.map((it) => pillWidth(c, it[1], 76, 300, 28));
+      let x = (W - ws.reduce((a, b) => a + b, 0) - 16 * (ws.length - 1)) / 2;
+      items.forEach((it, i) => {
+        pill(c, x, 1500, ws[i], 144, it[0], it[1], { tagS: 24, valS: 76, valColor: it[2], sombra: F ? F.sombra : '#C4165F' });
+        x += ws[i] + 16;
+      });
+      cta(c, 180, 1700, 720, 104, ctaLines(false), 44);
+    } else {
+      nameLines.forEach((l, i) => txt(c, l, 44, 112 + i * 84, { font: TITAN(nameLines.length > 1 ? 76 : 84), color: ink, align: 'left', shadow: [0, 5, sombra], maxW: 640 }));
+      const fy = 112 + (nameLines.length - 1) * 84 + 54;
+      txt(c, frase, 44, fy, { font: NUNITO(34), color: F ? F.acento : NORMAL.frase, align: 'left', shadow: F ? [0, 3, F.sombra] : null, maxW: 640 });
+      await marca(c, 1040, 14, 104, { t: pz.t, align: 'right', color: ink, shadow: sombra });
+      const items = pr.plazo ? [['Contado', pr.contado, '#FF3D8B'], ['A plazo', pr.plazo, '#B0661A']] : [['Precio', pr.contado, '#FF3D8B']];
+      const ws = items.map((it) => pillWidth(c, it[1], 54, 210, 20));
+      const cw = 270, gap = 14, h = 104;
+      let x = W - 40 - (ws.reduce((a, b) => a + b, 0) + cw + gap * ws.length);
+      items.forEach((it, i) => {
+        pill(c, x, 916, ws[i], h, it[0], it[1], { tagS: 20, valS: 54, valColor: it[2], sombra: F ? F.sombra : '#C4165F', border: 4, off: 6 });
+        x += ws[i] + gap;
+      });
+      cta(c, x, 916, cw, h, ctaLines(true), 30, { r: 26, border: 4, off: 6, icon: 40 });
+    }
+  }
+  // Parte un texto en renglones que quepan en maxW (como máximo n renglones)
+  function wrapLines(c, s, maxW, n) {
+    const words = String(s || '').split(/\s+/);
+    const lines = [];
+    let cur = '';
+    words.forEach((w) => {
+      const t = cur ? cur + ' ' + w : w;
+      if (c.measureText(t).width <= maxW || !cur) cur = t;
+      else {
+        lines.push(cur);
+        cur = w;
+      }
+    });
+    if (cur) lines.push(cur);
+    if (lines.length > n) lines.splice(n - 1, lines.length, lines.slice(n - 1).join(' '));
+    return lines;
+  }
+
   /* ---------- Pieza general de una festividad (mascota + los tres postres, sin precios) ---------- */
   async function drawFest(c, pz) {
     const F = FEST[pz.t];
     const v = pz.fmt === 'historia';
     const ilus = await img(IL(`${pz.t}-${v ? 'v' : 'c'}`));
-    const marca = { color: F.ink, shadow: [0, 7, F.sombra] };
     const acento = { color: F.acento, shadow: [0, 5, F.sombra] };
-    const lista = ORDEN.filter((k) => precios(k)).map((k) => POSTRES[k].short).join('  ·  ');
+    const lista = menu().map((x) => x.name).join('  ·  ');
     if (v) {
       // la ilustración (2:3) se centra y las franjas se llenan con su primer y último renglón
       c.drawImage(ilus, 0, 0, ilus.width, 2, 0, 0, 1080, 152);
       c.drawImage(ilus, 0, ilus.height - 2, ilus.width, 2, 0, 1768, 1080, 152);
       c.drawImage(ilus, 0, 150, 1080, 1620);
-      txt(c, 'Dulza', 540, 200, { font: TITAN(150), ...marca });
+      await marca(c, 540, 20, 190, { t: pz.t, color: F.ink, shadow: F.sombra });
       txt(c, F.saludo, 540, 300, { font: TITAN(84), ...acento, maxW: 1000 });
       txt(c, F.general, 540, 1556, { font: TITAN(54), color: F.ink, shadow: [0, 4, F.sombra], maxW: 980 });
       txt(c, lista, 540, 1616, { font: NUNITO(38), color: F.sub, maxW: 980 });
       cta(c, 190, 1740, 700, 104, phone() ? [`WhatsApp ${phone()}`] : ['Encarga por WhatsApp'], 44);
     } else {
       c.drawImage(ilus, 0, 0, 1080, 1080);
-      txt(c, 'Dulza', 750, 150, { font: TITAN(120), ...marca });
+      await marca(c, 750, 8, 164, { t: pz.t, color: F.ink, shadow: F.sombra });
       txt(c, F.saludo, 750, 240, { font: TITAN(70), ...acento, maxW: 600 });
       txt(c, F.general, 750, 296, { font: NUNITO(34), color: F.sub, shadow: [0, 2, F.sombra], maxW: 600 });
       cta(c, 280, 976, 600, 76, ctaLines(false), 32, { icon: 38 });
     }
   }
 
-  const DRAW = { postre: drawPostre, menuC: drawMenuC, menuV: drawMenuV, volante: drawVolante, fest: drawFest };
+  const DRAW = { postre: drawPostre, menuC: drawMenuC, menuV: drawMenuV, volante: drawVolante, fest: drawFest, gen: drawGen };
 
   // Dibuja la pieza a la escala pedida (1 = tamaño real) y devuelve el canvas
   async function render(pz, scale = 1) {
@@ -494,6 +739,11 @@
       const pr = precios(pz.k);
       return `${pz.t ? FEST[pz.t].emoji + ' ' : ''}${POSTRES[pz.k].short} de ${D.data.settings.name || 'Dulza'}: ${pr.contado}${pr.plazo ? ` de contado o ${pr.plazo} a plazo` : ''}. ${pide} 💖`;
     }
+    if (pz.kind === 'gen') {
+      const p = byId(pz.pid);
+      const pr = preciosDe(p);
+      return `${pz.t ? FEST[pz.t].emoji + ' ' : ''}${p.name} de ${D.data.settings.name || 'Dulza'}: ${pr.contado}${pr.plazo ? ` de contado o ${pr.plazo} a plazo` : ''}. ${pide} 💖`;
+    }
     return `${D.data.settings.name || 'Dulza'} · postres hechos con amor 💖 ${pide}`;
   };
 
@@ -525,7 +775,7 @@
       btn && btn.classList.remove('is-busy');
     }
   }
-  const find = (id) => PIEZAS.find((p) => p.id === id);
+  const find = (id) => piezas().find((p) => p.id === id);
 
   // Compartir necesita que el toque sea reciente: la imagen se empieza a preparar desde que el dedo toca el botón
   document.addEventListener(
@@ -558,7 +808,7 @@
     const orden = Object.keys(FMT);
     const hoy = temporadaHoy();
     const peso = (pz) => (hoy && pz.t === hoy ? 0 : 1) * 10 + orden.indexOf(pz.fmt);
-    const list = PIEZAS.filter((pz) => available(pz) && pasa(pz)).sort((a, b) => peso(a) - peso(b));
+    const list = piezas().filter((pz) => available(pz) && pasa(pz)).sort((a, b) => peso(a) - peso(b));
     if (!list.length)
       return D.ui.empty({ title: 'No hay piezas aquí', text: 'Activa tus postres en el catálogo con su precio para ver su publicidad.', mood: 'think', compact: true });
     return `<div class="ad-grid">${list
