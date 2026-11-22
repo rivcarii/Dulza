@@ -22,6 +22,8 @@
             ${row('productos', 'cupcake', 'Postres', D.plural(D.data.products.length, 'postre', 'postres'))}
             ${row('proveedores', 'truck', 'Proveedores', D.plural(D.data.suppliers.length, 'proveedor', 'proveedores'))}
           </div>
+          <div class="form-title">Ventas</div>
+          <div class="list" data-rise>${row('publicidad', 'gift', 'Publicidad', 'Imágenes para estados, historias y redes')}</div>
           <div class="form-title">Análisis</div>
           <div class="list" data-rise>${row('reportes', 'chart', 'Reportes', 'Ganancias, mejores clientes y más')}</div>
           <div class="form-title">App</div>

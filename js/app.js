@@ -12,6 +12,7 @@
     { id: 'clientes', label: 'Clientes', icon: 'users', group: 'Catálogo' },
     { id: 'productos', label: 'Postres', icon: 'cupcake', group: 'Catálogo' },
     { id: 'proveedores', label: 'Proveedores', icon: 'truck', group: 'Catálogo' },
+    { id: 'publicidad', label: 'Publicidad', icon: 'gift', group: 'Ventas' },
     { id: 'reportes', label: 'Reportes', icon: 'chart', group: 'Análisis' },
     { id: 'ajustes', label: 'Ajustes', icon: 'sliders', group: 'Cuenta' },
   ];
