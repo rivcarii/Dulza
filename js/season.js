@@ -99,7 +99,7 @@
     logo: D.gpt.logo, logoName: D.gpt.logoName, badge: D.gpt.badge, icon: D.gpt.icon,
   };
   // Temporadas con logos propios (temporadas/<id>/logos/: logo, letras, insignia, isotipo, favicon-64)
-  const CON_LOGOS = ['navidad'];
+  const CON_LOGOS = ['navidad', 'amor', 'madre', 'padre', 'pascua', 'halloween'];
   // En temporada, TODAS las caras de Dulce van con el vestuario de la fecha (nunca con la ropa rosa de siempre):
   // las alegres usan «hola» y las demás el busto
   const ALEGRES = ['happy', 'joy', 'hello', 'hug', 'love', 'kiss', 'cheer', 'yum', 'bake'];
@@ -107,10 +107,10 @@
   // Íconos de la interfaz que tienen versión de temporada (temporadas/<id>/iconos/<nombre>.png)
   const ICONOS = ['home', 'receipt', 'wallet', 'cart', 'users', 'cupcake', 'truck', 'gift', 'chart', 'sliders', 'more', 'sparkle', 'heart', 'star', 'bell', 'calendar'];
   // Temporadas cuya lámina de íconos ya está en la app
-  const CON_ICONOS = ['navidad'];
+  const CON_ICONOS = ['navidad', 'amor', 'madre', 'padre', 'pascua', 'halloween'];
 
   // Temporadas con vestuario ya dibujado (las demás quedan listas en el calendario y se encienden al agregar sus imágenes)
-  const LISTAS = ['navidad'];
+  const LISTAS = ['navidad', 'amor', 'madre', 'padre', 'pascua', 'halloween'];
   SEASONS.splice(0, SEASONS.length, ...SEASONS.filter((s) => LISTAS.includes(s.id)));
 
   const byDate = (date = new Date()) => {

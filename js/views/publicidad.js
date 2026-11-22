@@ -54,7 +54,7 @@
     halloween: { emoji: '🎃', name: 'Halloween', saludo: '¡Feliz Halloween!', frase: '¡Dulce o truco!', general: 'Postres de miedo… ¡de ricos!', ink: '#fff', sombra: '#24093F', acento: '#FFB347', sub: '#F1E3FF' },
   };
   // Festividades cuyas ilustraciones ya están en la app
-  const FEST_LISTAS = ['navidad'];
+  const FEST_LISTAS = ['navidad', 'amor', 'madre', 'padre', 'pascua', 'halloween'];
   FEST_LISTAS.forEach((t) => {
     const F = FEST[t];
     ORDEN.forEach((k) => {
