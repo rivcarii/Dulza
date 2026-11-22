@@ -38,12 +38,32 @@
   PIEZAS.push({ id: 'historia-menu', fmt: 'historia', kind: 'menuV', title: 'Nuestro menú' });
   PIEZAS.push({ id: 'post-menu', fmt: 'post', kind: 'menuC', title: 'Nuestro menú' });
   PIEZAS.push({ id: 'volante-menu', fmt: 'volante', kind: 'volante', title: 'Volante del menú' });
-  ORDEN.forEach((k) => {
-    PIEZAS.push({ id: `historia-navidad-${SLUG[k]}`, fmt: 'historia', kind: 'postre', k, nav: true, title: `${POSTRES[k].short} navideño` });
-    PIEZAS.push({ id: `post-navidad-${SLUG[k]}`, fmt: 'post', kind: 'postre', k, nav: true, title: `${POSTRES[k].short} navideño` });
+  /* ---------- Festividades: cada una con su propia colección de plantillas ----------
+     Ilustraciones en base/<id>-<postre>-v|c.jpg (cada postre) y base/<id>-v|c.jpg (general). Fondo oscuro → letras
+     blancas; fondo claro (Pascua) → letras de color. */
+  const esCO = () => !!(D.season && /colombia/i.test(D.season.pais() || ''));
+  const FEST = {
+    navidad: { emoji: '🎄', name: 'Navidad', saludo: '¡Feliz Navidad!', frase: '¡Endulza tu Navidad!', general: 'Encarga tus postres navideños', ink: '#fff', sombra: '#7A0A30', acento: '#FFD66B', sub: '#FFE6F1' },
+    amor: {
+      emoji: '💘', get name() { return esCO() ? 'Amor y Amistad' : 'San Valentín'; }, get saludo() { return esCO() ? '¡Feliz Amor y Amistad!' : '¡Feliz San Valentín!'; },
+      frase: '¡Endulza a quien quieres!', general: 'Regala algo dulce', ink: '#fff', sombra: '#7A0A2C', acento: '#FFD1E3', sub: '#FFE6F1',
+    },
+    madre: { emoji: '💐', name: 'Día de la Madre', saludo: '¡Feliz Día de la Madre!', frase: '¡Para la reina de la casa!', general: 'Consiente a mamá con algo dulce', ink: '#fff', sombra: '#4A1F70', acento: '#FFD1F0', sub: '#F3E6FF' },
+    padre: { emoji: '👔', name: 'Día del Padre', saludo: '¡Feliz Día del Padre!', frase: '¡Para el mejor papá!', general: 'Consiente a papá con algo dulce', ink: '#fff', sombra: '#0E2350', acento: '#FFD66B', sub: '#DCEBFF' },
+    pascua: { emoji: '🐣', name: 'Pascua', saludo: '¡Felices Pascuas!', frase: '¡Dulces Pascuas!', general: 'Postres para compartir en Pascua', ink: '#6B3FA0', sombra: '#F5C542', acento: '#C4165F', sub: '#5A2E1B' },
+    halloween: { emoji: '🎃', name: 'Halloween', saludo: '¡Feliz Halloween!', frase: '¡Dulce o truco!', general: 'Postres de miedo… ¡de ricos!', ink: '#fff', sombra: '#24093F', acento: '#FFB347', sub: '#F1E3FF' },
+  };
+  // Festividades cuyas ilustraciones ya están en la app
+  const FEST_LISTAS = ['navidad'];
+  FEST_LISTAS.forEach((t) => {
+    const F = FEST[t];
+    ORDEN.forEach((k) => {
+      PIEZAS.push({ id: `historia-${t}-${SLUG[k]}`, fmt: 'historia', kind: 'postre', k, t, get title() { return `${POSTRES[k].short} · ${FEST[t].name}`; } });
+      PIEZAS.push({ id: `post-${t}-${SLUG[k]}`, fmt: 'post', kind: 'postre', k, t, get title() { return `${POSTRES[k].short} · ${FEST[t].name}`; } });
+    });
+    PIEZAS.push({ id: `historia-${t}`, fmt: 'historia', kind: 'fest', t, get title() { return FEST[t].saludo; } });
+    PIEZAS.push({ id: `post-${t}`, fmt: 'post', kind: 'fest', t, get title() { return FEST[t].saludo; } });
   });
-  PIEZAS.push({ id: 'historia-navidad', fmt: 'historia', kind: 'navGen', nav: true, title: 'Feliz Navidad' });
-  PIEZAS.push({ id: 'post-navidad', fmt: 'post', kind: 'navGen', nav: true, title: 'Feliz Navidad' });
   D.PUBLICIDAD = PIEZAS;
 
   /* ---------- Catálogo ---------- */
@@ -205,19 +225,21 @@
   }
 
   /* ---------- Pieza de un postre (normal o navideña) ---------- */
-  const NAV = { top: '#90043A', bottom: '#C81056', ink: '#fff', sombra: '#7A0A30', frase: '#FFD66B', pill: '#7A0A30' };
   async function drawPostre(c, pz) {
     const P = POSTRES[pz.k];
     const pr = precios(pz.k);
     const v = pz.fmt === 'historia';
-    const nav = !!pz.nav;
-    const ilus = await img(IL(`${nav ? 'navidad-' : ''}${pz.k}-${v ? 'v' : 'c'}`));
+    const F = pz.t ? FEST[pz.t] : null;
+    const nav = !!F; // pieza de festividad
+    const NAV = F ? { ink: F.ink, sombra: F.sombra, frase: F.acento, pill: F.sombra } : null;
+    const ilus = await img(IL(`${F ? pz.t + '-' : ''}${pz.k}-${v ? 'v' : 'c'}`));
     const W = 1080, H = v ? 1920 : 1080;
     const ink = nav ? NAV.ink : P.ink;
     const sombra = nav ? NAV.sombra : P.sombra;
-    const frase = nav ? '¡Endulza tu Navidad!' : P.frase;
-    const marca = nav ? { color: '#fff', shadow: [0, 4, NAV.sombra] } : { color: '#FF3D8B', shadow: [0, 4, '#C4165F'] };
-    fillBg(c, W, H, nav ? NAV.top : P.bg, nav ? NAV.bottom : null);
+    const frase = nav ? F.frase : P.frase;
+    const marca = nav ? { color: F.ink, shadow: [0, 4, NAV.sombra] } : { color: '#FF3D8B', shadow: [0, 4, '#C4165F'] };
+    fillBg(c, W, H, P.bg);
+    if (!v) c.drawImage(ilus, 0, ilus.height - 2, ilus.width, 2, 0, 1040, 1080, 40); // franja de abajo del mismo fondo
     if (v) {
       // la ilustración es 2:3 y la historia 9:16: las franjas de arriba y abajo se llenan estirando su primer
       // y último renglón, así el fondo continúa sin corte
@@ -373,32 +395,34 @@
     cta(c, 270, ny + 34, 700, 72, ctaLines(false), 34, { border: 4, off: 6, icon: 44 });
   }
 
-  /* ---------- Navidad general (mascota + los tres postres, sin precios) ---------- */
-  async function drawNavGen(c, pz) {
+  /* ---------- Pieza general de una festividad (mascota + los tres postres, sin precios) ---------- */
+  async function drawFest(c, pz) {
+    const F = FEST[pz.t];
     const v = pz.fmt === 'historia';
-    const ilus = await img(IL(`navidad-${v ? 'v' : 'c'}`));
-    const blanco = { color: '#fff', shadow: [0, 7, '#7A0A30'] };
-    const oro = { color: '#FFD66B', shadow: [0, 5, '#7A0A30'] };
+    const ilus = await img(IL(`${pz.t}-${v ? 'v' : 'c'}`));
+    const marca = { color: F.ink, shadow: [0, 7, F.sombra] };
+    const acento = { color: F.acento, shadow: [0, 5, F.sombra] };
+    const lista = ORDEN.filter((k) => precios(k)).map((k) => POSTRES[k].short).join('  ·  ');
     if (v) {
-      fillBg(c, 1080, 1920, '#A4063D', '#D31B63');
+      // la ilustración (2:3) se centra y las franjas se llenan con su primer y último renglón
+      c.drawImage(ilus, 0, 0, ilus.width, 2, 0, 0, 1080, 152);
+      c.drawImage(ilus, 0, ilus.height - 2, ilus.width, 2, 0, 1768, 1080, 152);
       c.drawImage(ilus, 0, 150, 1080, 1620);
-      txt(c, 'Dulza', 540, 200, { font: TITAN(150), ...blanco });
-      txt(c, '¡Feliz Navidad!', 540, 300, { font: TITAN(84), ...oro, maxW: 1000 });
-      txt(c, 'Endulza tu Navidad', 540, 1556, { font: TITAN(54), color: '#fff', shadow: [0, 4, '#7A0A30'], maxW: 980 });
-      const lista = ORDEN.filter((k) => precios(k)).map((k) => POSTRES[k].short).join('  ·  ');
-      txt(c, lista, 540, 1616, { font: NUNITO(38), color: '#FFE6F1', maxW: 980 });
+      txt(c, 'Dulza', 540, 200, { font: TITAN(150), ...marca });
+      txt(c, F.saludo, 540, 300, { font: TITAN(84), ...acento, maxW: 1000 });
+      txt(c, F.general, 540, 1556, { font: TITAN(54), color: F.ink, shadow: [0, 4, F.sombra], maxW: 980 });
+      txt(c, lista, 540, 1616, { font: NUNITO(38), color: F.sub, maxW: 980 });
       cta(c, 190, 1740, 700, 104, phone() ? [`WhatsApp ${phone()}`] : ['Encarga por WhatsApp'], 44);
     } else {
-      fillBg(c, 1080, 1080, '#B8144C');
       c.drawImage(ilus, 0, 0, 1080, 1080);
-      txt(c, 'Dulza', 750, 150, { font: TITAN(120), ...blanco });
-      txt(c, '¡Feliz Navidad!', 750, 240, { font: TITAN(70), ...oro, maxW: 600 });
-      txt(c, 'Encarga tus postres navideños', 750, 296, { font: NUNITO(34), color: '#FFE6F1', shadow: [0, 2, '#7A0A30'], maxW: 600 });
+      txt(c, 'Dulza', 750, 150, { font: TITAN(120), ...marca });
+      txt(c, F.saludo, 750, 240, { font: TITAN(70), ...acento, maxW: 600 });
+      txt(c, F.general, 750, 296, { font: NUNITO(34), color: F.sub, shadow: [0, 2, F.sombra], maxW: 600 });
       cta(c, 280, 976, 600, 76, ctaLines(false), 32, { icon: 38 });
     }
   }
 
-  const DRAW = { postre: drawPostre, menuC: drawMenuC, menuV: drawMenuV, volante: drawVolante, navGen: drawNavGen };
+  const DRAW = { postre: drawPostre, menuC: drawMenuC, menuV: drawMenuV, volante: drawVolante, fest: drawFest };
 
   // Dibuja la pieza a la escala pedida (1 = tamaño real) y devuelve el canvas
   async function render(pz, scale = 1) {
@@ -468,7 +492,7 @@
     const pide = n ? `Pide por WhatsApp: ${n}` : 'Pide por WhatsApp';
     if (pz.kind === 'postre') {
       const pr = precios(pz.k);
-      return `${pz.nav ? '🎄 ' : ''}${POSTRES[pz.k].short} de ${D.data.settings.name || 'Dulza'}: ${pr.contado}${pr.plazo ? ` de contado o ${pr.plazo} a plazo` : ''}. ${pide} 💖`;
+      return `${pz.t ? FEST[pz.t].emoji + ' ' : ''}${POSTRES[pz.k].short} de ${D.data.settings.name || 'Dulza'}: ${pr.contado}${pr.plazo ? ` de contado o ${pr.plazo} a plazo` : ''}. ${pide} 💖`;
     }
     return `${D.data.settings.name || 'Dulza'} · postres hechos con amor 💖 ${pide}`;
   };
@@ -517,15 +541,24 @@
   /* ==========================================================================
      Galería
      ========================================================================== */
-  const st = (D.ui.state.publicidad = { f: '' });
-  const FILTROS = [['', 'Todas'], ['historia', 'Historias y estados'], ['post', 'Publicaciones'], ['navidad', 'Navidad'], ['volante', 'Volantes']];
-  const pasa = (pz) => !st.f || (st.f === 'navidad' ? pz.nav : pz.fmt === st.f);
+  // Dos filtros: ocasión (todo el año o cada festividad) y formato. Al entrar en temporada, abre en la de la fecha.
+  const temporadaHoy = () => {
+    const s = D.season && D.season.current();
+    return s && FEST_LISTAS.includes(s.id) ? s.id : '';
+  };
+  const st = (D.ui.state.publicidad = { f: '', o: null });
+  const FORMATOS = [['', 'Todos'], ['historia', 'Historias y estados'], ['post', 'Publicaciones'], ['volante', 'Volantes']];
+  const ocasiones = () => [['', 'Todas'], ['siempre', '🧁 Todo el año'], ...FEST_LISTAS.map((t) => [t, `${FEST[t].emoji} ${FEST[t].name}`])];
+  const pasa = (pz) => (!st.f || pz.fmt === st.f) && (!st.o || (st.o === 'siempre' ? !pz.t : pz.t === st.o));
   const ratio = (pz) => `${FMT[pz.fmt].w} / ${FMT[pz.fmt].h}`;
 
   function gridHtml() {
     // por formato (historias, publicaciones, volante) para que las tarjetas de cada fila tengan la misma altura
+    // primero la festividad de la fecha, luego por formato
     const orden = Object.keys(FMT);
-    const list = PIEZAS.filter((pz) => available(pz) && pasa(pz)).sort((a, b) => orden.indexOf(a.fmt) - orden.indexOf(b.fmt));
+    const hoy = temporadaHoy();
+    const peso = (pz) => (hoy && pz.t === hoy ? 0 : 1) * 10 + orden.indexOf(pz.fmt);
+    const list = PIEZAS.filter((pz) => available(pz) && pasa(pz)).sort((a, b) => peso(a) - peso(b));
     if (!list.length)
       return D.ui.empty({ title: 'No hay piezas aquí', text: 'Activa tus postres en el catálogo con su precio para ver su publicidad.', mood: 'think', compact: true });
     return `<div class="ad-grid">${list
@@ -577,12 +610,15 @@
     title: 'Publicidad',
     render() {
       const n = phone();
+      if (st.o === null) st.o = temporadaHoy(); // primera vez: la festividad de la fecha
+      const chips = (list, cur, attr) => list.map(([v, l]) => `<button type="button" class="filter-chip" ${attr}="${v}" aria-pressed="${v === cur}">${esc(l)}</button>`).join('');
       return D.ui.page({
         title: 'Publicidad',
         sub: 'Imágenes con tus precios al día, listas para estados, historias y redes',
-        body: `<div class="toolbar" data-rise><div class="chips-row" id="ad-fmts">${FILTROS.map(
-          ([v, l]) => `<button type="button" class="filter-chip" data-adf="${v}" aria-pressed="${v === st.f}">${esc(l)}</button>`
-        ).join('')}</div></div>
+        body: `<div class="toolbar" data-rise>
+            <div class="chips-row" id="ad-ocas" aria-label="Ocasión">${chips(ocasiones(), st.o, 'data-ado')}</div>
+            <div class="chips-row" id="ad-fmts" aria-label="Formato">${chips(FORMATOS, st.f, 'data-adf')}</div>
+          </div>
           <p class="ad-hint muted" data-rise>${D.icon('sparkle')}<span>Toca <b>Compartir</b> y elige WhatsApp, Instagram o Facebook. Los precios salen de tu catálogo de <a href="#/productos">Postres</a>${
             n ? '' : '; guarda el WhatsApp del negocio en <a href="#/ajustes">Ajustes</a> para que aparezca en las imágenes'
           }.</span></p>
@@ -595,10 +631,15 @@
   };
 
   document.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-adf]');
+    const b = e.target.closest('[data-adf],[data-ado]');
     if (!b) return;
-    st.f = b.dataset.adf;
-    $$('#ad-fmts .filter-chip').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    if ('adf' in b.dataset) {
+      st.f = b.dataset.adf;
+      $$('#ad-fmts .filter-chip').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    } else {
+      st.o = b.dataset.ado;
+      $$('#ad-ocas .filter-chip').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    }
     const g = $('#ad-grid');
     g.innerHTML = gridHtml();
     paintThumbs(g);
